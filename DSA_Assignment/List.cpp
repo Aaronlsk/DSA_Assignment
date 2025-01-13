@@ -1,4 +1,7 @@
 #include "List.h"  // header file
+#include <fstream>
+#include <sstream>
+#include <string>
 
 // constructor
 List::List() { size = 0; }
@@ -69,9 +72,9 @@ void List::print()
     {
         // Assuming Actor has a method to print its details
         cout << "Actor " << i + 1 << ": "
+            << items[i].getId() << ", "
             << items[i].getName() << ", "
-            << items[i].getDateOfBirth() << ", "
-            << items[i].getAge() << endl;
+            << items[i].getDateOfBirth() << endl;
     }
 }
 
@@ -83,4 +86,45 @@ void List::replace(int index, ItemType item)
     {
         items[index] = item;  // replace the item at the specified index
     }
+}
+
+
+// CSV Reading
+bool List::readFromCSV(const string& filename) {
+    ifstream file(filename);
+    if (!file.is_open()) {
+        cout << "Error: Could not open file " << filename << endl;
+        return false;
+    }
+
+    string line;
+    // Skip header line if it exists
+    getline(file, line);
+
+    while (getline(file, line) && size < MAX_SIZE) {
+        stringstream ss(line);
+        int id;
+        string name;
+        int birthYear;
+        char comma;
+
+        if (ss >> id >> comma &&
+            getline(ss, name, ',') &&
+            ss >> birthYear) {
+
+            // Create new Actor and add to list
+            Actor newActor(id, name, birthYear);
+            add(newActor);
+        }
+        else {
+            cout << "Error: Invalid data format in line: " << line << endl;
+        }
+    }
+
+    if (size >= MAX_SIZE) {
+        cout << "Warning: List has reached max size. Some actors may not have been added." << endl;
+    }
+
+    file.close();
+    return true;
 }

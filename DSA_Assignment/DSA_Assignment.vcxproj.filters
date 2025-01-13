@@ -33,4 +33,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Users\aaron\Downloads\data\actors.csv" />
+  </ItemGroup>
 </Project>

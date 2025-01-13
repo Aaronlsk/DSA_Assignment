@@ -5,22 +5,22 @@ using namespace std;
 class Actor
 {
 private:
+    int id;
     string name;
-    string dateOfBirth;
-    int age;
+    int dateOfBirth;
 
 public:
     // constructors
     Actor();
-    Actor(string name, string dateOfBirth, int age);
+    Actor(int id, string name, int dateOfBirth);
 
     // getter methods
+    int getId() const;
     string getName() const;
-    string getDateOfBirth() const;
-    int getAge() const;
+    int getDateOfBirth() const;
 
     // setter methods
+    void setId(int id);
     void setName(const string& name);
-    void setDateOfBirth(const string& dateOfBirth);
-    void setAge(int age);
+    void setDateOfBirth(int dob);
 };

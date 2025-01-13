@@ -40,4 +40,6 @@ public:
 
     // replace an item in the specified index in the list
     void replace(int index, ItemType item);
+
+    bool readFromCSV(const string& filename);
 };
