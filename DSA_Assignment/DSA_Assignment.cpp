@@ -6,12 +6,12 @@ using namespace std;
 
 // Function prototypes
 void displayMainMenu();
-void displayAdminMenu(List& actorList);
+void displayAdminMenu(List<Actor>& actorList);
 void displayUserMenu();
 
 int main() {
-    List actorList;
-    actorList.readFromCSV("C:/school work/aaaaaaaaaaaaa/data/actors.csv");
+    List<Actor> actorList;
+    actorList.readFromCSV("C:/Year 2/Sem 2/DSA/aaaaaa DSA Assignment/data/actors.csv");
 
     cout << "Welcome! Join us fellow movie enthusiasts as we explore \nour favourite actors and movies using this application!" << endl;
     int choice;
@@ -49,7 +49,7 @@ void displayMainMenu() {
 }
 
 // Function to display the administrator menu
-void displayAdminMenu(List& actorList) {
+void displayAdminMenu(List<Actor>& actorList) {
     int adminChoice;
     while (true) {
         cout << "\n--------------- Administrator Menu ---------------" << endl;

@@ -1,45 +1,29 @@
 #pragma once
-#include <iostream>
+#include <string>
 #include "Actor.h"
-using namespace std;
 
-const int MAX_SIZE = 100;
-typedef Actor ItemType; 
+const int MAX_SIZE = 100;  // Maximum size for the list
 
+// Template class declaration
+template<class T>
 class List
 {
 private:
-    ItemType items[MAX_SIZE]; 
-    int size;
+    T items[MAX_SIZE];  // Array to store the items
+    int size;           // Current size of the list
 
 public:
-
-    // constructor
+    // Constructors and destructor
     List();
+    ~List();
 
-    // add an item to the back of the list (append)
-    bool add(ItemType item);
+    // Method to add an item
+    bool add(T item);
+    bool add(int index, T item);
 
-    // add an item at a specified position in the list (insert)
-    bool add(int index, ItemType item);
-
-    // remove an item at a specified position in the list
-    void remove(int index);
-
-    // get an item at a specified position of the list (retrieve)
-    ItemType get(int index);
-
-    // check if the list is empty
-    bool isEmpty();
-
-    // check the size of the list
-    int getLength();
-
-    // print all items in the list
-    void print();
-
-    // replace an item in the specified index in the list
-    void replace(int index, ItemType item);
-
+    // Method to read data from a CSV file
     bool readFromCSV(const string& filename);
+
+    // Method to print list items
+    void print() const;
 };
