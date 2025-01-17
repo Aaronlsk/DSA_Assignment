@@ -1,7 +1,4 @@
-// Movie.cpp
 #include "Movie.h"
-
-Movie::Movie() : id(-1), title(""), releaseYear(0) {} // Default constructor
 
 Movie::Movie(int id, const string& title, int releaseYear) : id(id), title(title), releaseYear(releaseYear) {}
 

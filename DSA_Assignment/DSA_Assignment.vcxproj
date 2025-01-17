@@ -128,16 +128,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Actor.cpp" />
-    <ClCompile Include="ActorHashTable.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Movie.cpp" />
-    <ClCompile Include="MovieHashTable.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Actor.h" />
-    <ClInclude Include="ActorHashTable.h" />
+    <ClInclude Include="HashTable.h" />
     <ClInclude Include="Movie.h" />
-    <ClInclude Include="MovieHashTable.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\..\..\Downloads\data (1)\actors.csv" />

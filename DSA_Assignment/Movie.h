@@ -1,4 +1,3 @@
-// Movie.h
 #ifndef MOVIE_H
 #define MOVIE_H
 
@@ -12,7 +11,7 @@ private:
     int releaseYear;
 
 public:
-    Movie(); // Default constructor
+    Movie() : id(-1), title(""), releaseYear(0) {}
     Movie(int id, const string& title, int releaseYear);
 
     int getId() const;

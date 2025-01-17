@@ -1,4 +1,3 @@
-// Actor.h
 #ifndef ACTOR_H
 #define ACTOR_H
 
@@ -12,7 +11,7 @@ private:
     int birthYear;
 
 public:
-    Actor(); // Default constructor
+    Actor() : id(-1), name(""), birthYear(0) {}
     Actor(int id, const string& name, int birthYear);
 
     int getId() const;

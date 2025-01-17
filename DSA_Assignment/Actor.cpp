@@ -1,7 +1,4 @@
-// Actor.cpp
 #include "Actor.h"
-
-Actor::Actor() : id(-1), name(""), birthYear(0) {} // Default constructor
 
 Actor::Actor(int id, const string& name, int birthYear) : id(id), name(name), birthYear(birthYear) {}
 

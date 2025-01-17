@@ -1,107 +1,197 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <unordered_map>
+#include <algorithm> 
 #include <vector>
-#include "ActorHashTable.h"
-#include "MovieHashTable.h"
+#include "Actor.h"
+#include "Movie.h"
+#include "HashTable.h"
+#include <regex>
 
-// Function to load actors from a CSV file
-void loadActorsFromFile(const string& filename, ActorHashTable& actorTable) {
+using namespace std;
+
+void loadActors(const string& filename, HashTable<int, Actor>& actorTable) {
     ifstream file(filename);
     if (!file.is_open()) {
-        cerr << "Error: Could not open " << filename << endl;
+        cerr << "Error: Could not open file " << filename << endl;
         return;
     }
 
     string line;
+    bool isFirstLine = true;
     while (getline(file, line)) {
+        if (isFirstLine) {
+            isFirstLine = false; // Skip header row
+            continue;
+        }
+
         stringstream ss(line);
         string idStr, name, birthYearStr;
 
-        // Parse the line
         getline(ss, idStr, ',');
         getline(ss, name, ',');
         getline(ss, birthYearStr, ',');
 
-        if (idStr.empty() || name.empty() || birthYearStr.empty()) continue; // Skip invalid rows
+        if (idStr.empty() || name.empty() || birthYearStr.empty()) {
+            cerr << "Error: Malformed row in actors.csv: " << line << endl;
+            continue;
+        }
 
-        int id = stoi(idStr);
-        int birthYear = stoi(birthYearStr);
-
-        Actor actor(id, name, birthYear);
-        actorTable.addActor(actor);
+        try {
+            int id = stoi(idStr);
+            int birthYear = stoi(birthYearStr);
+            Actor actor(id, name, birthYear);
+            actorTable.insert(id, actor);
+        }
+        catch (const std::invalid_argument& e) {
+            cerr << "Error: Invalid numeric data in actors.csv: " << line << endl;
+            continue;
+        }
+        catch (const std::out_of_range& e) {
+            cerr << "Error: Numeric value out of range in actors.csv: " << line << endl;
+            continue;
+        }
     }
 
     cout << "Actors loaded successfully from " << filename << endl;
     file.close();
 }
 
-// Function to load movies from a CSV file
-void loadMoviesFromFile(const string& filename, MovieHashTable& movieTable) {
+void loadMovies(const string& filename, HashTable<int, Movie>& movieTable) {
     ifstream file(filename);
     if (!file.is_open()) {
-        cerr << "Error: Could not open " << filename << endl;
+        cerr << "Error: Could not open file " << filename << endl;
         return;
     }
 
     string line;
+    bool isFirstLine = true;
+
     while (getline(file, line)) {
+        if (isFirstLine) {
+            isFirstLine = false; // Skip the header row
+            continue;
+        }
+
         stringstream ss(line);
         string idStr, title, releaseYearStr;
 
-        // Parse the line
+        // Parse the movie ID
         getline(ss, idStr, ',');
-        getline(ss, title, ',');
-        getline(ss, releaseYearStr, ',');
 
-        if (idStr.empty() || title.empty() || releaseYearStr.empty()) continue; // Skip invalid rows
+        // Parse the title (quoted or unquoted)
+        if (ss.peek() == '"') {
+            getline(ss, title, '"'); // Skip opening quote
+            getline(ss, title, '"'); // Read the quoted title
+            ss.ignore(1, ',');      // Skip the comma after the closing quote
+        }
+        else {
+            getline(ss, title, ','); // Read unquoted title
+        }
 
-        int id = stoi(idStr);
-        int releaseYear = stoi(releaseYearStr);
+        // Skip description (up to the last comma before the release year)
+        string temp;
+        while (getline(ss, temp, ',')) {
+            if (regex_match(temp, regex("\\d+"))) { // Look for a numeric year
+                releaseYearStr = temp;
+                break;
+            }
+        }
 
-        Movie movie(id, title, releaseYear);
-        movieTable.addMovie(movie);
+        // Validate fields
+        if (idStr.empty() || title.empty() || releaseYearStr.empty()) {
+            cerr << "Error: Malformed row in movies.csv: " << line << endl;
+            continue; // Skip malformed rows
+        }
+
+        try {
+            int id = stoi(idStr);
+            int releaseYear = stoi(releaseYearStr);
+            Movie movie(id, title, releaseYear);
+            movieTable.insert(id, movie);
+        }
+        catch (const std::invalid_argument& e) {
+            cerr << "Error: Invalid numeric data in movies.csv: " << line << endl;
+            continue;
+        }
+        catch (const std::out_of_range& e) {
+            cerr << "Error: Numeric value out of range in movies.csv: " << line << endl;
+            continue;
+        }
     }
 
     cout << "Movies loaded successfully from " << filename << endl;
     file.close();
 }
 
-// Function to load cast data from a CSV file
-void loadCastFromFile(
-    const string& filename,
-    unordered_map<int, vector<int>>& actorToMovies,
-    unordered_map<int, vector<int>>& movieToActors) {
+
+
+void loadCast(const string& filename, HashTable<int, vector<int>>& actorToMovies, HashTable<int, vector<int>>& movieToActors) {
     ifstream file(filename);
     if (!file.is_open()) {
-        cerr << "Error: Could not open " << filename << endl;
+        cerr << "Error: Could not open file " << filename << endl;
         return;
     }
 
     string line;
+    bool isFirstLine = true;
     while (getline(file, line)) {
+        if (isFirstLine) {
+            isFirstLine = false; // Skip header row
+            continue;
+        }
+
         stringstream ss(line);
         string actorIdStr, movieIdStr;
 
-        // Parse the line
         getline(ss, actorIdStr, ',');
         getline(ss, movieIdStr, ',');
 
-        if (actorIdStr.empty() || movieIdStr.empty()) continue; // Skip invalid rows
+        if (actorIdStr.empty() || movieIdStr.empty()) {
+            cerr << "Error: Malformed row in cast.csv: " << line << endl;
+            continue;
+        }
 
-        int actorId = stoi(actorIdStr);
-        int movieId = stoi(movieIdStr);
+        try {
+            int actorId = stoi(actorIdStr);
+            int movieId = stoi(movieIdStr);
 
-        actorToMovies[actorId].push_back(movieId);
-        movieToActors[movieId].push_back(actorId);
+            // Update actor-to-movie mapping
+            vector<int>* movies = actorToMovies.get(actorId);
+            if (movies) {
+                movies->push_back(movieId);
+            }
+            else {
+                actorToMovies.insert(actorId, { movieId });
+            }
+
+            // Update movie-to-actor mapping
+            vector<int>* actors = movieToActors.get(movieId);
+            if (actors) {
+                actors->push_back(actorId);
+            }
+            else {
+                movieToActors.insert(movieId, { actorId });
+            }
+        }
+        catch (const std::invalid_argument& e) {
+            cerr << "Error: Invalid numeric data in cast.csv: " << line << endl;
+            continue;
+        }
+        catch (const std::out_of_range& e) {
+            cerr << "Error: Numeric value out of range in cast.csv: " << line << endl;
+            continue;
+        }
     }
 
     cout << "Cast data loaded successfully from " << filename << endl;
     file.close();
 }
+
+
+// Display Admin Menu
 void displayAdminMenu() {
-    cout << "Admin Menu:\n";
+    cout << "\nAdmin Menu:\n";
     cout << "1. Add New Actor\n";
     cout << "2. Add New Movie\n";
     cout << "3. Update Actor Details\n";
@@ -110,8 +200,9 @@ void displayAdminMenu() {
     cout << "6. Exit\n";
 }
 
+// Display User Menu
 void displayUserMenu() {
-    cout << "User Menu:\n";
+    cout << "\nUser Menu:\n";
     cout << "1. Display Actors by Age Range\n";
     cout << "2. Display Movies from Past 3 Years\n";
     cout << "3. Display Movies by Actor\n";
@@ -120,78 +211,67 @@ void displayUserMenu() {
     cout << "6. Exit\n";
 }
 
-// Function to print all actors in the hash table
-void displayAllActors(ActorHashTable& actorTable) {
-    cout << "Actors:\n";
-    for (int i = 0; i < 10; ++i) { // Loop through hash table buckets
-        auto& bucket = actorTable.getBucket(i); // Get the bucket
-        for (const auto& actor : bucket) {      // Loop through actors in the bucket
-            cout << "ID: " << actor.getId()
-                << ", Name: " << actor.getName()
-                << ", Birth Year: " << actor.getBirthYear() << "\n";
-        }
+// Display all actors in the hash table
+void displayAllActors(HashTable<int, Actor>& actorTable) {
+    cout << "\nActors:\n";
+    for (const auto& entry : actorTable.getAll()) {
+        const Actor& actor = entry.second;
+        cout << "ID: " << actor.getId()
+            << ", Name: " << actor.getName()
+            << ", Birth Year: " << actor.getBirthYear() << "\n";
     }
 }
 
-// Function to print all movies in the hash table
-void displayAllMovies(MovieHashTable& movieTable) {
-    cout << "Movies:\n";
-    for (int i = 0; i < 10; ++i) { // Loop through hash table buckets
-        auto& bucket = movieTable.getBucket(i); // Get the bucket
-        for (const auto& movie : bucket) {      // Loop through movies in the bucket
-            cout << "ID: " << movie.getId()
-                << ", Title: " << movie.getTitle()
-                << ", Release Year: " << movie.getReleaseYear() << "\n";
-        }
+// Display all movies in the hash table
+void displayAllMovies(HashTable<int, Movie>& movieTable) {
+    cout << "\nMovies:\n";
+    for (const auto& entry : movieTable.getAll()) {
+        const Movie& movie = entry.second;
+        cout << "ID: " << movie.getId()
+            << ", Title: " << movie.getTitle()
+            << ", Release Year: " << movie.getReleaseYear() << "\n";
     }
 }
-
 int main() {
-    ActorHashTable actorTable(10); // Actor hash table
-    MovieHashTable movieTable(10); // Movie hash table
-    unordered_map<int, vector<int>> actorToMovies;
-    unordered_map<int, vector<int>> movieToActors;
+    HashTable<int, Actor> actorTable(10);
+    HashTable<int, Movie> movieTable(10);
+    HashTable<int, vector<int>> actorToMovies(10);
+    HashTable<int, vector<int>> movieToActors(10);
 
-    // Load data from CSV files
-    loadActorsFromFile("actors.csv", actorTable);
-    loadMoviesFromFile("movies.csv", movieTable);
-    loadCastFromFile("cast.csv", actorToMovies, movieToActors);
+    loadActors("C:/Users/Admin/source/repos/Aaronlsk/DSA_Assignment/DSA_Assignment/actors.csv", actorTable);
+    loadMovies("C:/Users/Admin/source/repos/Aaronlsk/DSA_Assignment/DSA_Assignment/movies.csv", movieTable);
+    loadCast("C:/Users/Admin/source/repos/Aaronlsk/DSA_Assignment/DSA_Assignment/cast.csv", actorToMovies, movieToActors);
 
-    // Debugging output: Display loaded relationships
-    cout << "Loaded Actor-to-Movie Relationships:\n";
-    for (const auto& pair : actorToMovies) {
-        cout << "Actor ID " << pair.first << " -> Movies: ";
-        for (int movieId : pair.second) {
+
+    // Debugging: Display loaded data
+    cout << "\nActor-to-Movie Relationships:\n";
+    for (const auto& entry : actorToMovies.getAll()) {
+        cout << "Actor ID " << entry.first << " -> Movies: ";
+        for (int movieId : entry.second) {
             cout << movieId << " ";
         }
         cout << endl;
     }
 
-    cout << "Loaded Movie-to-Actor Relationships:\n";
-    for (const auto& pair : movieToActors) {
-        cout << "Movie ID " << pair.first << " -> Actors: ";
-        for (int actorId : pair.second) {
-            cout << actorId << " ";
-        }
-        cout << endl;
-    }
-
-
     // Prompt user for role
-    cout << "Are you an Admin or User? (Enter Admin/User): ";
+    cout << "\nAre you an Admin or User? (Enter Admin/User): ";
     string role;
     cin >> role;
 
-    if (role == "Admin" ) {
+    // Convert input to lowercase for case-insensitivity
+    std::transform(role.begin(), role.end(), role.begin(), ::tolower);
+
+    if (role == "admin") {
         while (true) {
             displayAdminMenu();
+            cout << "Enter your choice: ";
             int choice;
             cin >> choice;
 
             if (choice == 1) {
                 int id, birthYear;
                 string name;
-                cout << "Enter Actor ID: ";
+                cout << "\nEnter Actor ID: ";
                 cin >> id;
                 cout << "Enter Name: ";
                 cin.ignore();
@@ -200,17 +280,13 @@ int main() {
                 cin >> birthYear;
 
                 Actor actor(id, name, birthYear);
-                if (actorTable.addActor(actor)) {
-                    cout << "Actor added successfully!\n";
-                }
-                else {
-                    cout << "Actor with this ID already exists.\n";
-                }
+                actorTable.insert(id, actor);
+                cout << "Actor added successfully!\n";
             }
             else if (choice == 2) {
                 int id, releaseYear;
                 string title;
-                cout << "Enter Movie ID: ";
+                cout << "\nEnter Movie ID: ";
                 cin >> id;
                 cout << "Enter Title: ";
                 cin.ignore();
@@ -219,51 +295,48 @@ int main() {
                 cin >> releaseYear;
 
                 Movie movie(id, title, releaseYear);
-                if (movieTable.addMovie(movie)) {
-                    cout << "Movie added successfully!\n";
-                }
-                else {
-                    cout << "Movie with this ID already exists.\n";
-                }
+                movieTable.insert(id, movie);
+                cout << "Movie added successfully!\n";
             }
             else if (choice == 3 || choice == 4) {
-                cout << "Update functionality is not yet implemented.\n";
+                cout << "\nUpdate functionality is not yet implemented.\n";
             }
             else if (choice == 5) {
-                // Debugging: Display all actors and movies
-                cout << "Debugging Data:\n";
+                cout << "\nActors:\n";
                 displayAllActors(actorTable);
+                cout << "\nMovies:\n";
                 displayAllMovies(movieTable);
             }
             else if (choice == 6) {
-                cout << "Exiting Admin menu...\n";
+                cout << "\nExiting Admin menu...\n";
                 break;
             }
             else {
-                cout << "Invalid choice. Please try again.\n";
+                cout << "\nInvalid choice. Please try again.\n";
             }
         }
     }
-    else if (role == "User") {
+    else if (role == "user") {
         while (true) {
             displayUserMenu();
+            cout << "Enter your choice: ";
             int choice;
             cin >> choice;
 
             if (choice >= 1 && choice <= 5) {
-                cout << "User functionality is not yet implemented.\n";
+                cout << "\nUser functionality is not yet implemented.\n";
             }
             else if (choice == 6) {
-                cout << "Exiting User menu...\n";
+                cout << "\nExiting User menu...\n";
                 break;
             }
             else {
-                cout << "Invalid choice. Please try again.\n";
+                cout << "\nInvalid choice. Please try again.\n";
             }
         }
     }
     else {
-        cout << "Invalid role entered. Exiting program...\n";
+        cout << "\nInvalid role entered. Exiting program...\n";
     }
 
     return 0;
