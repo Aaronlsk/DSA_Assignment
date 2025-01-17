@@ -1,18 +1,26 @@
+// Actor.cpp
 #include "Actor.h"
 
-// default constructor
-Actor::Actor() : id(0), name(""), birthYear(0) {}
+Actor::Actor() : id(-1), name(""), birthYear(0) {} // Default constructor
 
-// parameterized constructor
-Actor::Actor(int i, string n, int by) : id(i), name(n), birthYear(by) {}
+Actor::Actor(int id, const string& name, int birthYear) : id(id), name(name), birthYear(birthYear) {}
 
-// getter methods
-int Actor::getId() const { return id; }
-string Actor::getName() const { return name; }
-int Actor::getBirthYear() const { return birthYear; }
+int Actor::getId() const {
+    return id;
+}
 
-// setter methods
-void Actor::setId(int i) { id = i; }
-void Actor::setName(const string& n) { name = n; }
-void Actor::setBirthYear(int by) { birthYear = by; }
+string Actor::getName() const {
+    return name;
+}
 
+int Actor::getBirthYear() const {
+    return birthYear;
+}
+
+void Actor::setName(const string& name) {
+    this->name = name;
+}
+
+void Actor::setBirthYear(int birthYear) {
+    this->birthYear = birthYear;
+}

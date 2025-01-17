@@ -127,18 +127,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="..\..\..\Users\aaron\Downloads\data\actors.csv" />
+    <None Include="actors.csv" />
+    <None Include="cast.csv" />
+    <None Include="movies.csv" />
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="Actor.cpp" />
-    <ClCompile Include="DSA_Assignment.cpp" />
-    <ClCompile Include="List.cpp" />
+    <ClCompile Include="HashTable.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="Movie.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Actor.h" />
-    <ClInclude Include="List.h" />
+    <ClInclude Include="HashTable.h" />
     <ClInclude Include="Movie.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\..\Users\aaron\Downloads\data\actors.csv" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

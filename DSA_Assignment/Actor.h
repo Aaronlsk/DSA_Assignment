@@ -1,26 +1,26 @@
-#pragma once
+// Actor.h
+#ifndef ACTOR_H
+#define ACTOR_H
+
 #include <string>
 using namespace std;
 
-class Actor
-{
+class Actor {
 private:
     int id;
     string name;
     int birthYear;
 
 public:
-    // constructors
-    Actor();
-    Actor(int id, string name, int birthYear);
+    Actor(); // Default constructor
+    Actor(int id, const string& name, int birthYear);
 
-    // getter methods
     int getId() const;
     string getName() const;
     int getBirthYear() const;
 
-    // setter methods
-    void setId(int id);
     void setName(const string& name);
-    void setBirthYear(int by);
+    void setBirthYear(int birthYear);
 };
+
+#endif // ACTOR_H
