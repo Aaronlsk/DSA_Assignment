@@ -1,19 +1,26 @@
+// Movie.cpp
 #include "Movie.h"
 
-// default constructor
-Movie::Movie() : id(0), title(""), year(0) {}
+Movie::Movie() : id(-1), title(""), releaseYear(0) {} // Default constructor
 
-// parameterized constructor
-Movie::Movie(int i, string t, int y) : id(i), title(t), year(y) {}
+Movie::Movie(int id, const string& title, int releaseYear) : id(id), title(title), releaseYear(releaseYear) {}
 
-// getter methods
-int Movie::getId() const { return id; }
-string Movie::getTitle() const { return title; }
-int Movie::getYear() const { return year; }
+int Movie::getId() const {
+    return id;
+}
 
-// setter methods
-void Movie::setId(int i) { id = i; }
-void Movie::setTitle(const string& t) { title = t; }
-void Movie::setYear(int y) { year = y; }
+string Movie::getTitle() const {
+    return title;
+}
 
+int Movie::getReleaseYear() const {
+    return releaseYear;
+}
 
+void Movie::setTitle(const string& title) {
+    this->title = title;
+}
+
+void Movie::setReleaseYear(int releaseYear) {
+    this->releaseYear = releaseYear;
+}

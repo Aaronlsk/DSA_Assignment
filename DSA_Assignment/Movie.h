@@ -1,26 +1,26 @@
-#pragma once
+// Movie.h
+#ifndef MOVIE_H
+#define MOVIE_H
+
 #include <string>
 using namespace std;
 
-class Movie
-{
+class Movie {
 private:
     int id;
     string title;
-    int year;
+    int releaseYear;
 
 public:
-    // constructors
-    Movie();
-    Movie(int id, string title, int year);
+    Movie(); // Default constructor
+    Movie(int id, const string& title, int releaseYear);
 
-    // getter methods
     int getId() const;
     string getTitle() const;
-    int getYear() const;
+    int getReleaseYear() const;
 
-    // setter methods
-    void setId(int id);
     void setTitle(const string& title);
-    void setYear(int year);
+    void setReleaseYear(int releaseYear);
 };
+
+#endif // MOVIE_H
