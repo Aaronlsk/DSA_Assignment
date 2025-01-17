@@ -194,8 +194,8 @@ void displayAdminMenu() {
     cout << "\nAdmin Menu:\n";
     cout << "1. Add New Actor\n";
     cout << "2. Add New Movie\n";
-    cout << "3. Update Actor Details\n";
-    cout << "4. Update Movie Details\n";
+    cout << "3. Add Actor to a movie\n";
+    cout << "4. Update Actor/Movie Details\n";
     cout << "5. Display All Data (Debugging)\n";
     cout << "6. Exit\n";
 }
@@ -232,6 +232,160 @@ void displayAllMovies(HashTable<int, Movie>& movieTable) {
             << ", Release Year: " << movie.getReleaseYear() << "\n";
     }
 }
+
+// Add actor to movie
+void addActorToMovie(
+    int actorId, int movieId,
+    HashTable<int, vector<int>>& actorToMovies,
+    HashTable<int, vector<int>>& movieToActors,
+    HashTable<int, Actor>& actorTable,
+    HashTable<int, Movie>& movieTable) {
+    // Validate actor existence
+    if (actorTable.get(actorId) == nullptr) {
+        cout << "Error: Actor ID " << actorId << " does not exist.\n";
+        return;
+    }
+
+    // Validate movie existence
+    if (movieTable.get(movieId) == nullptr) {
+        cout << "Error: Movie ID " << movieId << " does not exist.\n";
+        return;
+    }
+
+    // Update actorToMovies
+    vector<int>* movies = actorToMovies.get(actorId);
+    if (movies) {
+        if (find(movies->begin(), movies->end(), movieId) == movies->end()) {
+            movies->push_back(movieId);
+        }
+        else {
+            cout << "Actor ID " << actorId << " is already in Movie ID " << movieId << ".\n";
+        }
+    }
+    else {
+        actorToMovies.insert(actorId, { movieId });
+    }
+
+    // Update movieToActors
+    vector<int>* actors = movieToActors.get(movieId);
+    if (actors) {
+        if (find(actors->begin(), actors->end(), actorId) == actors->end()) {
+            actors->push_back(actorId);
+        }
+        else {
+            cout << "Movie ID " << movieId << " already has Actor ID " << actorId << ".\n";
+        }
+    }
+    else {
+        movieToActors.insert(movieId, { actorId });
+    }
+
+    cout << "Actor ID " << actorId << " successfully added to Movie ID " << movieId << ".\n";
+
+    // Call debugging function to display updated relationships
+    cout << "\nUpdated Actor-to-Movie Relationships:\n";
+    for (const auto& entry : actorToMovies.getAll()) {
+        cout << "Actor ID " << entry.first << " -> Movies: ";
+        for (int movieId : entry.second) {
+            cout << movieId << " ";
+        }
+        cout << endl;
+    }
+}
+
+//update actor details
+void updateActorDetails(HashTable<int, Actor>& actorTable) {
+    int actorId;
+    cout << "Enter Actor ID to update: ";
+    cin >> actorId;
+
+    Actor* actor = actorTable.get(actorId);
+    if (actor == nullptr) {
+        cout << "Error: Actor ID " << actorId << " does not exist.\n";
+        return;
+    }
+
+    cout << "Current Details:\n";
+    cout << "Name: " << actor->getName() << ", Birth Year: " << actor->getBirthYear() << "\n";
+
+    int choice;
+    cout << "What would you like to update?\n";
+    cout << "1. Name\n";
+    cout << "2. Birth Year\n";
+    cout << "Enter choice: ";
+    cin >> choice;
+
+    if (choice == 1) {
+        string newName;
+        cout << "Enter new name: ";
+        cin.ignore();
+        getline(cin, newName);
+        actor->setName(newName);
+        cout << "Actor name updated successfully.\n";
+    }
+    else if (choice == 2) {
+        int newBirthYear;
+        cout << "Enter new birth year: ";
+        cin >> newBirthYear;
+        actor->setBirthYear(newBirthYear);
+        cout << "Actor birth year updated successfully.\n";
+    }
+    else {
+        cout << "Invalid choice. No changes made.\n";
+    }
+
+    // Display updated actor details
+    cout << "\nUpdated Actor Details:\n";
+    cout << "ID: " << actor->getId() << ", Name: " << actor->getName() << ", Birth Year: " << actor->getBirthYear() << "\n";
+}
+
+//update movie details
+void updateMovieDetails(HashTable<int, Movie>& movieTable) {
+    int movieId;
+    cout << "Enter Movie ID to update: ";
+    cin >> movieId;
+
+    Movie* movie = movieTable.get(movieId);
+    if (movie == nullptr) {
+        cout << "Error: Movie ID " << movieId << " does not exist.\n";
+        return;
+    }
+
+    cout << "Current Details:\n";
+    cout << "Title: " << movie->getTitle() << ", Release Year: " << movie->getReleaseYear() << "\n";
+
+    int choice;
+    cout << "What would you like to update?\n";
+    cout << "1. Title\n";
+    cout << "2. Release Year\n";
+    cout << "Enter choice: ";
+    cin >> choice;
+
+    if (choice == 1) {
+        string newTitle;
+        cout << "Enter new title: ";
+        cin.ignore();
+        getline(cin, newTitle);
+        movie->setTitle(newTitle);
+        cout << "Movie title updated successfully.\n";
+    }
+    else if (choice == 2) {
+        int newReleaseYear;
+        cout << "Enter new release year: ";
+        cin >> newReleaseYear;
+        movie->setReleaseYear(newReleaseYear);
+        cout << "Movie release year updated successfully.\n";
+    }
+    else {
+        cout << "Invalid choice. No changes made.\n";
+    }
+
+    // Display updated movie details
+    cout << "\nUpdated Movie Details:\n";
+    cout << "ID: " << movie->getId() << ", Title: " << movie->getTitle() << ", Release Year: " << movie->getReleaseYear() << "\n";
+}
+
+
 int main() {
     HashTable<int, Actor> actorTable(10);
     HashTable<int, Movie> movieTable(10);
@@ -298,8 +452,33 @@ int main() {
                 movieTable.insert(id, movie);
                 cout << "Movie added successfully!\n";
             }
-            else if (choice == 3 || choice == 4) {
-                cout << "\nUpdate functionality is not yet implemented.\n";
+            else if (choice == 3) {
+                int actorId, movieId;
+                cout << "\nEnter Actor ID: ";
+                cin >> actorId;
+                cout << "Enter Movie ID: ";
+                cin >> movieId;
+
+                addActorToMovie(actorId, movieId, actorToMovies, movieToActors, actorTable, movieTable);
+            }
+
+            else if (choice == 4) {
+                int updateChoice;
+                cout << "\nWhat would you like to update?\n";
+                cout << "1. Actor Details\n";
+                cout << "2. Movie Details\n";
+                cout << "Enter choice: ";
+                cin >> updateChoice;
+
+                if (updateChoice == 1) {
+                    updateActorDetails(actorTable);
+                }
+                else if (updateChoice == 2) {
+                    updateMovieDetails(movieTable);
+                }
+                else {
+                    cout << "Invalid choice. Returning to Admin menu.\n";
+                }
             }
             else if (choice == 5) {
                 cout << "\nActors:\n";
