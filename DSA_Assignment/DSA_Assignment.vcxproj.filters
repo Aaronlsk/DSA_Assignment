@@ -15,11 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\Users\aaron\Downloads\data\actors.csv" />
-    <None Include="cast.csv" />
-    <None Include="movies.csv" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="Actor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -49,5 +44,16 @@
     <ClInclude Include="MovieHashTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\..\..\Downloads\data (1)\actors.csv">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="..\..\..\..\..\Downloads\data (1)\cast.csv">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="..\..\..\..\..\Downloads\data (1)\movies.csv">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
