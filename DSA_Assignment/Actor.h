@@ -7,20 +7,20 @@ class Actor
 private:
     int id;
     string name;
-    int dateOfBirth;
+    int birthYear;
 
 public:
     // constructors
     Actor();
-    Actor(int id, string name, int dateOfBirth);
+    Actor(int id, string name, int birthYear);
 
     // getter methods
     int getId() const;
     string getName() const;
-    int getDateOfBirth() const;
+    int getBirthYear() const;
 
     // setter methods
     void setId(int id);
     void setName(const string& name);
-    void setDateOfBirth(int dob);
+    void setBirthYear(int by);
 };

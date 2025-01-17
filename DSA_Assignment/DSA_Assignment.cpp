@@ -1,17 +1,21 @@
 #include <iostream>
 #include <string>
 #include "Actor.h"
+#include "Movie.h"
 #include "List.h"
 using namespace std;
 
 // Function prototypes
 void displayMainMenu();
-void displayAdminMenu(List<Actor>& actorList);
+void displayAdminMenu(List<Actor>& actorList, List<Movie>& movieList);
 void displayUserMenu();
 
 int main() {
     List<Actor> actorList;
-    actorList.readFromCSV("C:/Year 2/Sem 2/DSA/aaaaaa DSA Assignment/data/actors.csv");
+    actorList.readFromCSV("actors.csv");
+
+    List<Movie> movieList;
+    movieList.readFromCSV("movies.csv");
 
     cout << "Welcome! Join us fellow movie enthusiasts as we explore \nour favourite actors and movies using this application!" << endl;
     int choice;
@@ -22,7 +26,7 @@ int main() {
         cin >> choice;
 
         if (choice == 1) {
-            displayAdminMenu(actorList);
+            displayAdminMenu(actorList, movieList);
         }
         else if (choice == 2) {
             displayUserMenu();
@@ -49,7 +53,7 @@ void displayMainMenu() {
 }
 
 // Function to display the administrator menu
-void displayAdminMenu(List<Actor>& actorList) {
+void displayAdminMenu(List<Actor>& actorList, List<Movie>& movieList) {
     int adminChoice;
     while (true) {
         cout << "\n--------------- Administrator Menu ---------------" << endl;
@@ -64,26 +68,51 @@ void displayAdminMenu(List<Actor>& actorList) {
 
         if (adminChoice == 1) {
             cout << "[1] Add new actor" << endl;
-            // Add functionality here
+
             int id;
             string name;
-            int dateOfBirth;
+            int birthYear;
+
             cout << "Enter id of actor: ";
             cin >> id;
-            cout << "Enter name of actor: ";
-            cin >> name;
-            cout << "Enter the actor's date of birth: ";
-            cin >> dateOfBirth;
+            cin.ignore();
 
-            Actor newActor(id, name, dateOfBirth);
+            cout << "Enter name of actor: ";
+            getline(cin, name);
+
+            cout << "Enter the actor's year of birth: ";
+            cin >> birthYear;
+
+            // Add the new actor
+            Actor newActor(id, name, birthYear);
             actorList.add(newActor);
 
-            cout << "Actor added successfully!" << endl;
+            cout << "Actor " << newActor.getName() << "has been added successfully!" << endl;
             actorList.print();
         }
         else if (adminChoice == 2) {
             cout << "[2] Add new movie" << endl;
             // Add functionality here
+            int id;
+            string title;
+            int year;
+
+            cout << "Enter id of movie: ";
+            cin >> id;
+            cin.ignore();
+
+            cout << "Enter name of movie: ";
+            getline(cin, title);
+
+            cout << "Enter the movie's year of release: ";
+            cin >> year;
+
+            // Add the new movie
+            Movie newMovie(id, title, year);
+            movieList.add(newMovie);
+
+            cout << "Movie " << newMovie.getTitle() << " has been added successfully!" << endl;
+            movieList.print();
         }
         else if (adminChoice == 3) {
             cout << "[3] Add an actor to a movie" << endl;
