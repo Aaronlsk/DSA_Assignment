@@ -1,15 +1,23 @@
+// main.cpp
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <algorithm> 
-#include <vector>
+#include <algorithm>
+#include <regex>
 #include "Actor.h"
 #include "Movie.h"
 #include "HashTable.h"
-#include <regex>
+#include "BST.h"
+#include "MovieBST.h"
+
+
+
+
+
 
 using namespace std;
 
+//feature a, e
 void loadActors(const string& filename, HashTable<int, Actor>& actorTable) {
     ifstream file(filename);
     if (!file.is_open()) {
@@ -57,6 +65,7 @@ void loadActors(const string& filename, HashTable<int, Actor>& actorTable) {
     file.close();
 }
 
+// Feature b, f
 void loadMovies(const string& filename, HashTable<int, Movie>& movieTable) {
     ifstream file(filename);
     if (!file.is_open()) {
@@ -125,7 +134,7 @@ void loadMovies(const string& filename, HashTable<int, Movie>& movieTable) {
 }
 
 
-
+// Supporting feature for c, g, h
 void loadCast(const string& filename, HashTable<int, vector<int>>& actorToMovies, HashTable<int, vector<int>>& movieToActors) {
     ifstream file(filename);
     if (!file.is_open()) {
@@ -234,6 +243,7 @@ void displayAllMovies(HashTable<int, Movie>& movieTable) {
 }
 
 // Add actor to movie
+// Feature c
 void addActorToMovie(
     int actorId, int movieId,
     HashTable<int, vector<int>>& actorToMovies,
@@ -292,54 +302,7 @@ void addActorToMovie(
         cout << endl;
     }
 }
-
-//update actor details
-void updateActorDetails(HashTable<int, Actor>& actorTable) {
-    int actorId;
-    cout << "Enter Actor ID to update: ";
-    cin >> actorId;
-
-    Actor* actor = actorTable.get(actorId);
-    if (actor == nullptr) {
-        cout << "Error: Actor ID " << actorId << " does not exist.\n";
-        return;
-    }
-
-    cout << "Current Details:\n";
-    cout << "Name: " << actor->getName() << ", Birth Year: " << actor->getBirthYear() << "\n";
-
-    int choice;
-    cout << "What would you like to update?\n";
-    cout << "1. Name\n";
-    cout << "2. Birth Year\n";
-    cout << "Enter choice: ";
-    cin >> choice;
-
-    if (choice == 1) {
-        string newName;
-        cout << "Enter new name: ";
-        cin.ignore();
-        getline(cin, newName);
-        actor->setName(newName);
-        cout << "Actor name updated successfully.\n";
-    }
-    else if (choice == 2) {
-        int newBirthYear;
-        cout << "Enter new birth year: ";
-        cin >> newBirthYear;
-        actor->setBirthYear(newBirthYear);
-        cout << "Actor birth year updated successfully.\n";
-    }
-    else {
-        cout << "Invalid choice. No changes made.\n";
-    }
-
-    // Display updated actor details
-    cout << "\nUpdated Actor Details:\n";
-    cout << "ID: " << actor->getId() << ", Name: " << actor->getName() << ", Birth Year: " << actor->getBirthYear() << "\n";
-}
-
-//update movie details
+//update movie details feature d
 void updateMovieDetails(HashTable<int, Movie>& movieTable) {
     int movieId;
     cout << "Enter Movie ID to update: ";
@@ -385,16 +348,155 @@ void updateMovieDetails(HashTable<int, Movie>& movieTable) {
     cout << "ID: " << movie->getId() << ", Title: " << movie->getTitle() << ", Release Year: " << movie->getReleaseYear() << "\n";
 }
 
+//update actor details
+// Feature d
+void updateActorDetails(HashTable<int, Actor>& actorTable) {
+    int actorId;
+    cout << "Enter Actor ID to update: ";
+    cin >> actorId;
+
+    Actor* actor = actorTable.get(actorId);
+    if (actor == nullptr) {
+        cout << "Error: Actor ID " << actorId << " does not exist.\n";
+        return;
+    }
+
+    cout << "Current Details:\n";
+    cout << "Name: " << actor->getName() << ", Birth Year: " << actor->getBirthYear() << "\n";
+
+    int choice;
+    cout << "What would you like to update?\n";
+    cout << "1. Name\n";
+    cout << "2. Birth Year\n";
+    cout << "Enter choice: ";
+    cin >> choice;
+
+    if (choice == 1) {
+        string newName;
+        cout << "Enter new name: ";
+        cin.ignore();
+        getline(cin, newName);
+        actor->setName(newName);
+        cout << "Actor name updated successfully.\n";
+    }
+    else if (choice == 2) {
+        int newBirthYear;
+        cout << "Enter new birth year: ";
+        cin >> newBirthYear;
+        actor->setBirthYear(newBirthYear);
+        cout << "Actor birth year updated successfully.\n";
+    }
+    else {
+        cout << "Invalid choice. No changes made.\n";
+    }
+
+    // Display updated actor details
+    cout << "\nUpdated Actor Details:\n";
+    cout << "ID: " << actor->getId() << ", Name: " << actor->getName() << ", Birth Year: " << actor->getBirthYear() << "\n";
+}
+// Function to load actors into a BST - feature E
+void loadActorsToBST(const HashTable<int, Actor>& actorTable, BST& bst) {
+    for (const auto& entry : actorTable.getAll()) {
+        const Actor& actor = entry.second;
+        bst.insert(actor);
+    }
+    cout << "Actors loaded into BST successfully.\n";
+}
+
+// Feature E: Display actors within an age range
+void displayActorsByAgeRange(BST& bst) {
+    int startYear, endYear;
+    cout << "Enter the starting birth year: ";
+    cin >> startYear;
+    cout << "Enter the ending birth year: ";
+    cin >> endYear;
+
+    cout << "Actors born between " << startYear << " and " << endYear << ":\n";
+    bst.displayRange(startYear, endYear);
+}
+// Feature F: Load movies into BST
+void loadMoviesToBST(const string& filename, MovieBST& movieBST) {
+    ifstream file(filename);
+    if (!file.is_open()) {
+        cerr << "Error: Could not open file " << filename << endl;
+        return;
+    }
+
+    string line;
+    bool isFirstLine = true;
+
+    while (getline(file, line)) {
+        if (isFirstLine) {
+            isFirstLine = false; // Skip header row
+            continue;
+        }
+
+        vector<string> fields;
+        string field;
+        bool inQuotes = false;
+
+        // Manually parse the line to handle quoted fields
+        for (char ch : line) {
+            if (ch == '"') {
+                inQuotes = !inQuotes; // Toggle inQuotes state
+            }
+            else if (ch == ',' && !inQuotes) {
+                fields.push_back(field);
+                field.clear();
+            }
+            else {
+                field += ch;
+            }
+        }
+        fields.push_back(field); // Add the last field
+
+        // Validate fields
+        if (fields.size() < 4) {
+            cerr << "Error: Malformed row in movies.csv: " << line << endl;
+            continue;
+        }
+
+        try {
+            int id = stoi(fields[0]);             // First field: Movie ID
+            string title = fields[1];            // Second field: Title
+            string description = fields[2];      // Third field: Description
+            int releaseYear = stoi(fields[3]);   // Fourth field: Release Year
+
+            // Insert movie into BST
+            Movie movie(id, title, releaseYear);
+            movieBST.insert(movie);
+        }
+        catch (const exception& e) {
+            cerr << "Error parsing row: " << line << " - " << e.what() << endl;
+        }
+    }
+
+    file.close();
+    cout << "Movies loaded into BST from " << filename << endl;
+}
+
+
+// Feature F: Display movies from the past three years
+void displayMoviesFromPastThreeYears(MovieBST& movieBST) {
+    int currentYear = 2025; // Replace with dynamic calculation if needed
+    int startYear = currentYear - 3;
+
+    cout << "Movies released in the past 3 years (from " << startYear << " to " << currentYear << "):\n";
+    movieBST.displayInRange(startYear, currentYear);
+}
 
 int main() {
     HashTable<int, Actor> actorTable(10);
     HashTable<int, Movie> movieTable(10);
     HashTable<int, vector<int>> actorToMovies(10);
     HashTable<int, vector<int>> movieToActors(10);
+    BST actorBST;
+    MovieBST movieBST;
 
     loadActors("C:/Users/Admin/source/repos/Aaronlsk/DSA_Assignment/DSA_Assignment/actors.csv", actorTable);
     loadMovies("C:/Users/Admin/source/repos/Aaronlsk/DSA_Assignment/DSA_Assignment/movies.csv", movieTable);
     loadCast("C:/Users/Admin/source/repos/Aaronlsk/DSA_Assignment/DSA_Assignment/cast.csv", actorToMovies, movieToActors);
+    loadMoviesToBST("C:/Users/Admin/source/repos/Aaronlsk/DSA_Assignment/DSA_Assignment/movies.csv", movieBST);
 
 
     // Debugging: Display loaded data
@@ -496,14 +598,20 @@ int main() {
         }
     }
     else if (role == "user") {
+        // Load actors into BST for user features
+        loadActorsToBST(actorTable, actorBST);
+
         while (true) {
             displayUserMenu();
             cout << "Enter your choice: ";
             int choice;
             cin >> choice;
 
-            if (choice >= 1 && choice <= 5) {
-                cout << "\nUser functionality is not yet implemented.\n";
+            if (choice == 1) {
+                displayActorsByAgeRange(actorBST);
+            }
+            else if (choice == 2) {
+                displayMoviesFromPastThreeYears(movieBST);
             }
             else if (choice == 6) {
                 cout << "\nExiting User menu...\n";

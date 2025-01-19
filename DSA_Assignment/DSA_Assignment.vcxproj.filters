@@ -24,10 +24,10 @@
     <ClCompile Include="Movie.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ActorHashTable.cpp">
+    <ClCompile Include="BST.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MovieHashTable.cpp">
+    <ClCompile Include="MovieBST.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -38,22 +38,19 @@
     <ClInclude Include="Movie.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ActorHashTable.h">
+    <ClInclude Include="HashTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MovieHashTable.h">
+    <ClInclude Include="BST.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MovieBST.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\..\..\Downloads\data (1)\actors.csv">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="..\..\..\..\..\Downloads\data (1)\cast.csv">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="..\..\..\..\..\Downloads\data (1)\movies.csv">
-      <Filter>Source Files</Filter>
-    </None>
+    <None Include="movies.csv" />
+    <None Include="cast.csv" />
+    <None Include="actors.csv" />
   </ItemGroup>
 </Project>
