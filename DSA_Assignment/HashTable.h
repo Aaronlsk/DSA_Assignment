@@ -1,55 +1,39 @@
+//group name: Blue Lock
+// Ng Kai Chong S10259894
+//Aaron Lua Siang Kian S10258287K
+
+//Hash Table custom implementation
+
 #ifndef HASHTABLE_H
 #define HASHTABLE_H
 
-#include <vector>
-#include <list>
-using namespace std;
+#include "LinkedList.h"
+#include "DynamicArray.h"
+#include <utility> // For std::pair
 
 template <typename Key, typename Value>
 class HashTable {
 private:
-    vector<list<pair<Key, Value>>> table;
+    LinkedList<std::pair<Key, Value>>* table; // Array of linked lists
     int capacity;
 
-    int hashFunction(Key key) const {
-        return key % capacity;
-    }
+    // Private helper function to compute the hash index
+    int hashFunction(Key key) const;
 
 public:
-    HashTable(int capacity) : capacity(capacity) {
-        table.resize(capacity);
-    }
+    // Constructor and Destructor
+    HashTable(int capacity);
+    ~HashTable();
 
-    void insert(Key key, Value value) {
-        int index = hashFunction(key);
-        for (auto& pair : table[index]) {
-            if (pair.first == key) {
-                pair.second = value; // Update existing
-                return;
-            }
-        }
-        table[index].emplace_back(key, value); // Insert new
-    }
+    // Core methods for insertion and retrieval
+    void insert(Key key, Value value);
+    Value* get(Key key);
 
-    Value* get(Key key) {
-        int index = hashFunction(key);
-        for (auto& pair : table[index]) {
-            if (pair.first == key) {
-                return &pair.second;
-            }
-        }
-        return nullptr; // Not found
-    }
+    // Retrieve all key-value pairs as a dynamic array
+    DynamicArray<std::pair<Key, Value>> getAll() const;
 
-    vector<pair<Key, Value>> getAll() const {
-        vector<pair<Key, Value>> allEntries;
-        for (const auto& bucket : table) {
-            for (const auto& pair : bucket) {
-                allEntries.push_back(pair);
-            }
-        }
-        return allEntries;
-    }
+    // Utility method to get a value by key or insert a default value
+    Value& getOrInsert(Key key, const Value& defaultValue = Value());
 };
 
 #endif // HASHTABLE_H

@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="Actor.cpp" />
     <ClCompile Include="BST.cpp" />
+    <ClCompile Include="HashTable.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Movie.cpp" />
     <ClCompile Include="MovieBST.cpp" />
@@ -136,7 +137,9 @@
   <ItemGroup>
     <ClInclude Include="Actor.h" />
     <ClInclude Include="BST.h" />
+    <ClInclude Include="DynamicArray.h" />
     <ClInclude Include="HashTable.h" />
+    <ClInclude Include="LinkedList.h" />
     <ClInclude Include="Movie.h" />
     <ClInclude Include="MovieBST.h" />
   </ItemGroup>

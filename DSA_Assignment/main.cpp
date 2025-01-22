@@ -1,23 +1,25 @@
+// group name: Blue Lock
+// Ng Kai Chong S10259894
+// Aaron Lua Siang Kian S10258287K
+
 // main.cpp
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <algorithm>
-#include <regex>
+// #include <regex> // <-- REMOVED, not being used
 #include "Actor.h"
 #include "Movie.h"
 #include "HashTable.h"
 #include "BST.h"
 #include "MovieBST.h"
-
-
-
-
-
+#include "DynamicArray.h"
 
 using namespace std;
 
-//feature a, e
+// ----------------------------------------------------------------------
+// Feature A, E: Load actors (CSV with 3 columns: ID, name, birthYear)
+// ----------------------------------------------------------------------
 void loadActors(const string& filename, HashTable<int, Actor>& actorTable) {
     ifstream file(filename);
     if (!file.is_open()) {
@@ -35,7 +37,6 @@ void loadActors(const string& filename, HashTable<int, Actor>& actorTable) {
 
         stringstream ss(line);
         string idStr, name, birthYearStr;
-
         getline(ss, idStr, ',');
         getline(ss, name, ',');
         getline(ss, birthYearStr, ',');
@@ -51,21 +52,41 @@ void loadActors(const string& filename, HashTable<int, Actor>& actorTable) {
             Actor actor(id, name, birthYear);
             actorTable.insert(id, actor);
         }
-        catch (const std::invalid_argument& e) {
-            cerr << "Error: Invalid numeric data in actors.csv: " << line << endl;
-            continue;
-        }
-        catch (const std::out_of_range& e) {
-            cerr << "Error: Numeric value out of range in actors.csv: " << line << endl;
-            continue;
+        catch (const exception& e) {
+            cerr << "Error processing row in actors.csv: " << line << endl;
         }
     }
-
     cout << "Actors loaded successfully from " << filename << endl;
     file.close();
 }
 
-// Feature b, f
+// ----------------------------------------------------------------------
+// Function to parse a CSV row into a DynamicArray of strings
+// (Already used by loadMoviesToBST, so let's reuse it in loadMovies too.)
+// ----------------------------------------------------------------------
+void parseCSVRow(const string& line, DynamicArray<std::string>& fields) {
+    string field;
+    bool inQuotes = false;
+
+    for (char ch : line) {
+        if (ch == '"') {
+            inQuotes = !inQuotes;  // Toggle inQuotes state
+        }
+        else if (ch == ',' && !inQuotes) {
+            fields.pushBack(field);  // Add the field to the array
+            field.clear();
+        }
+        else {
+            field += ch;
+        }
+    }
+    // Add last field after loop
+    fields.pushBack(field);
+}
+
+// ----------------------------------------------------------------------
+// Feature B, F: Load movies (CSV with 4 columns: ID, Title, Description, Year)
+// ----------------------------------------------------------------------
 void loadMovies(const string& filename, HashTable<int, Movie>& movieTable) {
     ifstream file(filename);
     if (!file.is_open()) {
@@ -82,50 +103,27 @@ void loadMovies(const string& filename, HashTable<int, Movie>& movieTable) {
             continue;
         }
 
-        stringstream ss(line);
-        string idStr, title, releaseYearStr;
+        // Use the same CSV parsing function as loadMoviesToBST
+        DynamicArray<std::string> fields;
+        parseCSVRow(line, fields);
 
-        // Parse the movie ID
-        getline(ss, idStr, ',');
-
-        // Parse the title (quoted or unquoted)
-        if (ss.peek() == '"') {
-            getline(ss, title, '"'); // Skip opening quote
-            getline(ss, title, '"'); // Read the quoted title
-            ss.ignore(1, ',');      // Skip the comma after the closing quote
-        }
-        else {
-            getline(ss, title, ','); // Read unquoted title
-        }
-
-        // Skip description (up to the last comma before the release year)
-        string temp;
-        while (getline(ss, temp, ',')) {
-            if (regex_match(temp, regex("\\d+"))) { // Look for a numeric year
-                releaseYearStr = temp;
-                break;
-            }
-        }
-
-        // Validate fields
-        if (idStr.empty() || title.empty() || releaseYearStr.empty()) {
+        // We expect at least 4 columns: ID, Title, Description, Year
+        if (fields.getSize() < 4) {
             cerr << "Error: Malformed row in movies.csv: " << line << endl;
-            continue; // Skip malformed rows
+            continue;
         }
 
         try {
-            int id = stoi(idStr);
-            int releaseYear = stoi(releaseYearStr);
+            int id = stoi(fields[0]);
+            string title = fields[1];
+            // fields[2] is the big description we don't store
+            int releaseYear = stoi(fields[3]);
+
             Movie movie(id, title, releaseYear);
             movieTable.insert(id, movie);
         }
-        catch (const std::invalid_argument& e) {
-            cerr << "Error: Invalid numeric data in movies.csv: " << line << endl;
-            continue;
-        }
-        catch (const std::out_of_range& e) {
-            cerr << "Error: Numeric value out of range in movies.csv: " << line << endl;
-            continue;
+        catch (const exception& e) {
+            cerr << "Error processing row in movies.csv: " << line << endl;
         }
     }
 
@@ -133,9 +131,12 @@ void loadMovies(const string& filename, HashTable<int, Movie>& movieTable) {
     file.close();
 }
 
-
-// Supporting feature for c, g, h
-void loadCast(const string& filename, HashTable<int, vector<int>>& actorToMovies, HashTable<int, vector<int>>& movieToActors) {
+// ----------------------------------------------------------------------
+// Supporting Feature for C, G, H (cast.csv presumably has only 2 columns)
+// ----------------------------------------------------------------------
+void loadCast(const string& filename,
+    HashTable<int, DynamicArray<int>>& actorToMovies,
+    HashTable<int, DynamicArray<int>>& movieToActors) {
     ifstream file(filename);
     if (!file.is_open()) {
         cerr << "Error: Could not open file " << filename << endl;
@@ -152,44 +153,18 @@ void loadCast(const string& filename, HashTable<int, vector<int>>& actorToMovies
 
         stringstream ss(line);
         string actorIdStr, movieIdStr;
-
         getline(ss, actorIdStr, ',');
         getline(ss, movieIdStr, ',');
-
-        if (actorIdStr.empty() || movieIdStr.empty()) {
-            cerr << "Error: Malformed row in cast.csv: " << line << endl;
-            continue;
-        }
 
         try {
             int actorId = stoi(actorIdStr);
             int movieId = stoi(movieIdStr);
 
-            // Update actor-to-movie mapping
-            vector<int>* movies = actorToMovies.get(actorId);
-            if (movies) {
-                movies->push_back(movieId);
-            }
-            else {
-                actorToMovies.insert(actorId, { movieId });
-            }
-
-            // Update movie-to-actor mapping
-            vector<int>* actors = movieToActors.get(movieId);
-            if (actors) {
-                actors->push_back(actorId);
-            }
-            else {
-                movieToActors.insert(movieId, { actorId });
-            }
+            actorToMovies.getOrInsert(actorId, DynamicArray<int>()).pushBack(movieId);
+            movieToActors.getOrInsert(movieId).pushBack(actorId);
         }
-        catch (const std::invalid_argument& e) {
-            cerr << "Error: Invalid numeric data in cast.csv: " << line << endl;
-            continue;
-        }
-        catch (const std::out_of_range& e) {
-            cerr << "Error: Numeric value out of range in cast.csv: " << line << endl;
-            continue;
+        catch (const exception& e) {
+            cerr << "Error processing row in cast.csv: " << line << endl;
         }
     }
 
@@ -197,8 +172,9 @@ void loadCast(const string& filename, HashTable<int, vector<int>>& actorToMovies
     file.close();
 }
 
-
+// ----------------------------------------------------------------------
 // Display Admin Menu
+// ----------------------------------------------------------------------
 void displayAdminMenu() {
     cout << "\nAdmin Menu:\n";
     cout << "1. Add New Actor\n";
@@ -209,7 +185,9 @@ void displayAdminMenu() {
     cout << "6. Exit\n";
 }
 
+// ----------------------------------------------------------------------
 // Display User Menu
+// ----------------------------------------------------------------------
 void displayUserMenu() {
     cout << "\nUser Menu:\n";
     cout << "1. Display Actors by Age Range\n";
@@ -220,7 +198,9 @@ void displayUserMenu() {
     cout << "6. Exit\n";
 }
 
-// Display all actors in the hash table
+// ----------------------------------------------------------------------
+// Display all actors
+// ----------------------------------------------------------------------
 void displayAllActors(HashTable<int, Actor>& actorTable) {
     cout << "\nActors:\n";
     for (const auto& entry : actorTable.getAll()) {
@@ -231,7 +211,9 @@ void displayAllActors(HashTable<int, Actor>& actorTable) {
     }
 }
 
-// Display all movies in the hash table
+// ----------------------------------------------------------------------
+// Display all movies
+// ----------------------------------------------------------------------
 void displayAllMovies(HashTable<int, Movie>& movieTable) {
     cout << "\nMovies:\n";
     for (const auto& entry : movieTable.getAll()) {
@@ -242,12 +224,12 @@ void displayAllMovies(HashTable<int, Movie>& movieTable) {
     }
 }
 
-// Add actor to movie
-// Feature c
-void addActorToMovie(
-    int actorId, int movieId,
-    HashTable<int, vector<int>>& actorToMovies,
-    HashTable<int, vector<int>>& movieToActors,
+// ----------------------------------------------------------------------
+// Feature C: Add actor to movie
+// ----------------------------------------------------------------------
+void addActorToMovie(int actorId, int movieId,
+    HashTable<int, DynamicArray<int>>& actorToMovies,
+    HashTable<int, DynamicArray<int>>& movieToActors,
     HashTable<int, Actor>& actorTable,
     HashTable<int, Movie>& movieTable) {
     // Validate actor existence
@@ -263,46 +245,29 @@ void addActorToMovie(
     }
 
     // Update actorToMovies
-    vector<int>* movies = actorToMovies.get(actorId);
-    if (movies) {
-        if (find(movies->begin(), movies->end(), movieId) == movies->end()) {
-            movies->push_back(movieId);
-        }
-        else {
-            cout << "Actor ID " << actorId << " is already in Movie ID " << movieId << ".\n";
-        }
+    DynamicArray<int>& movies = actorToMovies.getOrInsert(actorId, DynamicArray<int>());
+    if (!movies.contains(movieId)) {
+        movies.pushBack(movieId);
     }
     else {
-        actorToMovies.insert(actorId, { movieId });
+        cout << "Actor ID " << actorId << " is already in Movie ID " << movieId << ".\n";
     }
 
     // Update movieToActors
-    vector<int>* actors = movieToActors.get(movieId);
-    if (actors) {
-        if (find(actors->begin(), actors->end(), actorId) == actors->end()) {
-            actors->push_back(actorId);
-        }
-        else {
-            cout << "Movie ID " << movieId << " already has Actor ID " << actorId << ".\n";
-        }
+    DynamicArray<int>& actors = movieToActors.getOrInsert(movieId, DynamicArray<int>());
+    if (!actors.contains(actorId)) {
+        actors.pushBack(actorId);
     }
     else {
-        movieToActors.insert(movieId, { actorId });
+        cout << "Movie ID " << movieId << " already has Actor ID " << actorId << ".\n";
     }
 
     cout << "Actor ID " << actorId << " successfully added to Movie ID " << movieId << ".\n";
-
-    // Call debugging function to display updated relationships
-    cout << "\nUpdated Actor-to-Movie Relationships:\n";
-    for (const auto& entry : actorToMovies.getAll()) {
-        cout << "Actor ID " << entry.first << " -> Movies: ";
-        for (int movieId : entry.second) {
-            cout << movieId << " ";
-        }
-        cout << endl;
-    }
 }
-//update movie details feature d
+
+// ----------------------------------------------------------------------
+// Feature D: Update movie details
+// ----------------------------------------------------------------------
 void updateMovieDetails(HashTable<int, Movie>& movieTable) {
     int movieId;
     cout << "Enter Movie ID to update: ";
@@ -315,7 +280,8 @@ void updateMovieDetails(HashTable<int, Movie>& movieTable) {
     }
 
     cout << "Current Details:\n";
-    cout << "Title: " << movie->getTitle() << ", Release Year: " << movie->getReleaseYear() << "\n";
+    cout << "Title: " << movie->getTitle()
+        << ", Release Year: " << movie->getReleaseYear() << "\n";
 
     int choice;
     cout << "What would you like to update?\n";
@@ -345,11 +311,14 @@ void updateMovieDetails(HashTable<int, Movie>& movieTable) {
 
     // Display updated movie details
     cout << "\nUpdated Movie Details:\n";
-    cout << "ID: " << movie->getId() << ", Title: " << movie->getTitle() << ", Release Year: " << movie->getReleaseYear() << "\n";
+    cout << "ID: " << movie->getId()
+        << ", Title: " << movie->getTitle()
+        << ", Release Year: " << movie->getReleaseYear() << "\n";
 }
 
-//update actor details
-// Feature d
+// ----------------------------------------------------------------------
+// Feature D: Update actor details
+// ----------------------------------------------------------------------
 void updateActorDetails(HashTable<int, Actor>& actorTable) {
     int actorId;
     cout << "Enter Actor ID to update: ";
@@ -362,7 +331,8 @@ void updateActorDetails(HashTable<int, Actor>& actorTable) {
     }
 
     cout << "Current Details:\n";
-    cout << "Name: " << actor->getName() << ", Birth Year: " << actor->getBirthYear() << "\n";
+    cout << "Name: " << actor->getName()
+        << ", Birth Year: " << actor->getBirthYear() << "\n";
 
     int choice;
     cout << "What would you like to update?\n";
@@ -392,9 +362,14 @@ void updateActorDetails(HashTable<int, Actor>& actorTable) {
 
     // Display updated actor details
     cout << "\nUpdated Actor Details:\n";
-    cout << "ID: " << actor->getId() << ", Name: " << actor->getName() << ", Birth Year: " << actor->getBirthYear() << "\n";
+    cout << "ID: " << actor->getId()
+        << ", Name: " << actor->getName()
+        << ", Birth Year: " << actor->getBirthYear() << "\n";
 }
-// Function to load actors into a BST - feature E
+
+// ----------------------------------------------------------------------
+// Feature E: Load actors into a BST
+// ----------------------------------------------------------------------
 void loadActorsToBST(const HashTable<int, Actor>& actorTable, BST& bst) {
     for (const auto& entry : actorTable.getAll()) {
         const Actor& actor = entry.second;
@@ -403,7 +378,9 @@ void loadActorsToBST(const HashTable<int, Actor>& actorTable, BST& bst) {
     cout << "Actors loaded into BST successfully.\n";
 }
 
+// ----------------------------------------------------------------------
 // Feature E: Display actors within an age range
+// ----------------------------------------------------------------------
 void displayActorsByAgeRange(BST& bst) {
     int startYear, endYear;
     cout << "Enter the starting birth year: ";
@@ -414,7 +391,10 @@ void displayActorsByAgeRange(BST& bst) {
     cout << "Actors born between " << startYear << " and " << endYear << ":\n";
     bst.displayRange(startYear, endYear);
 }
-// Feature F: Load movies into BST
+
+// ----------------------------------------------------------------------
+// Feature F: Load movies into BST (already uses parseCSVRow properly)
+// ----------------------------------------------------------------------
 void loadMoviesToBST(const string& filename, MovieBST& movieBST) {
     ifstream file(filename);
     if (!file.is_open()) {
@@ -427,42 +407,25 @@ void loadMoviesToBST(const string& filename, MovieBST& movieBST) {
 
     while (getline(file, line)) {
         if (isFirstLine) {
-            isFirstLine = false; // Skip header row
+            isFirstLine = false; // Skip header
             continue;
         }
 
-        vector<string> fields;
-        string field;
-        bool inQuotes = false;
+        DynamicArray<std::string> fields;
+        parseCSVRow(line, fields);
 
-        // Manually parse the line to handle quoted fields
-        for (char ch : line) {
-            if (ch == '"') {
-                inQuotes = !inQuotes; // Toggle inQuotes state
-            }
-            else if (ch == ',' && !inQuotes) {
-                fields.push_back(field);
-                field.clear();
-            }
-            else {
-                field += ch;
-            }
-        }
-        fields.push_back(field); // Add the last field
-
-        // Validate fields
-        if (fields.size() < 4) {
+        // We expect 4 columns: ID, Title, Description, Year
+        if (fields.getSize() < 4) {
             cerr << "Error: Malformed row in movies.csv: " << line << endl;
             continue;
         }
 
         try {
-            int id = stoi(fields[0]);             // First field: Movie ID
-            string title = fields[1];            // Second field: Title
-            string description = fields[2];      // Third field: Description
-            int releaseYear = stoi(fields[3]);   // Fourth field: Release Year
+            int id = stoi(fields[0]);
+            string title = fields[1];
+            // fields[2] is description
+            int releaseYear = stoi(fields[3]);
 
-            // Insert movie into BST
             Movie movie(id, title, releaseYear);
             movieBST.insert(movie);
         }
@@ -475,29 +438,36 @@ void loadMoviesToBST(const string& filename, MovieBST& movieBST) {
     cout << "Movies loaded into BST from " << filename << endl;
 }
 
-
+// ----------------------------------------------------------------------
 // Feature F: Display movies from the past three years
+// ----------------------------------------------------------------------
 void displayMoviesFromPastThreeYears(MovieBST& movieBST) {
-    int currentYear = 2025; // Replace with dynamic calculation if needed
+    int currentYear = 2025;
     int startYear = currentYear - 3;
 
-    cout << "Movies released in the past 3 years (from " << startYear << " to " << currentYear << "):\n";
+    cout << "Movies released in the past 3 years (from "
+        << startYear << " to " << currentYear << "):\n";
     movieBST.displayInRange(startYear, currentYear);
 }
 
+// ----------------------------------------------------------------------
+// Main
+// ----------------------------------------------------------------------
 int main() {
     HashTable<int, Actor> actorTable(10);
     HashTable<int, Movie> movieTable(10);
-    HashTable<int, vector<int>> actorToMovies(10);
-    HashTable<int, vector<int>> movieToActors(10);
+    HashTable<int, DynamicArray<int>> actorToMovies(10);
+    HashTable<int, DynamicArray<int>> movieToActors(10);
     BST actorBST;
     MovieBST movieBST;
 
+    // Load data
     loadActors("C:/Users/Admin/source/repos/Aaronlsk/DSA_Assignment/DSA_Assignment/actors.csv", actorTable);
     loadMovies("C:/Users/Admin/source/repos/Aaronlsk/DSA_Assignment/DSA_Assignment/movies.csv", movieTable);
-    loadCast("C:/Users/Admin/source/repos/Aaronlsk/DSA_Assignment/DSA_Assignment/cast.csv", actorToMovies, movieToActors);
-    loadMoviesToBST("C:/Users/Admin/source/repos/Aaronlsk/DSA_Assignment/DSA_Assignment/movies.csv", movieBST);
-
+    loadCast("C:/Users/Admin/source/repos/Aaronlsk/DSA_Assignment/DSA_Assignment/cast.csv",
+        actorToMovies, movieToActors);
+    loadMoviesToBST("C:/Users/Admin/source/repos/Aaronlsk/DSA_Assignment/DSA_Assignment/movies.csv",
+        movieBST);
 
     // Debugging: Display loaded data
     cout << "\nActor-to-Movie Relationships:\n";
@@ -517,6 +487,7 @@ int main() {
     // Convert input to lowercase for case-insensitivity
     std::transform(role.begin(), role.end(), role.begin(), ::tolower);
 
+    // Admin workflow
     if (role == "admin") {
         while (true) {
             displayAdminMenu();
@@ -561,9 +532,10 @@ int main() {
                 cout << "Enter Movie ID: ";
                 cin >> movieId;
 
-                addActorToMovie(actorId, movieId, actorToMovies, movieToActors, actorTable, movieTable);
+                addActorToMovie(actorId, movieId,
+                    actorToMovies, movieToActors,
+                    actorTable, movieTable);
             }
-
             else if (choice == 4) {
                 int updateChoice;
                 cout << "\nWhat would you like to update?\n";
@@ -597,6 +569,7 @@ int main() {
             }
         }
     }
+    // User workflow
     else if (role == "user") {
         // Load actors into BST for user features
         loadActorsToBST(actorTable, actorBST);
@@ -622,6 +595,7 @@ int main() {
             }
         }
     }
+    // Invalid role
     else {
         cout << "\nInvalid role entered. Exiting program...\n";
     }
