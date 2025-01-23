@@ -1,3 +1,8 @@
+// group name: Blue Lock
+// Ng Kai Chong S10259894
+// Aaron Lua Siang Kian S10258287K
+//Movies class implementation
+
 #include "Movie.h"
 
 Movie::Movie(int id, const string& title, int releaseYear) : id(id), title(title), releaseYear(releaseYear) {}

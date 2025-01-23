@@ -1,3 +1,10 @@
+
+// group name: Blue Lock
+// Ng Kai Chong S10259894
+// Aaron Lua Siang Kian S10258287K
+//Custom Movie BST to handle data from movies.csv
+
+
 #include "MovieBST.h"
 
 // Constructor

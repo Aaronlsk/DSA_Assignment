@@ -1,3 +1,9 @@
+//group name: Blue Lock
+// Ng Kai Chong S10259894
+//Aaron Lua Siang Kian S10258287K
+//Custom binary search table header file
+
+
 #pragma once
 // BST.h
 #ifndef BST_H

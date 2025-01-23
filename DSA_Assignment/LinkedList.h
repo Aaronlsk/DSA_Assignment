@@ -11,6 +11,7 @@
 // Aaron Lua Siang Kian S10258287K
 //
 // LinkedList custom implementation for hashtable (header-only)
+// No implementation file as we are using templates (allowed for use in project - Not stated under prohibited libaries)
 // ---------------------------------------------------------------
 
 template <typename T>

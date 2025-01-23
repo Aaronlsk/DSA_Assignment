@@ -1,6 +1,10 @@
 //group name: Blue Lock
 // Ng Kai Chong S10259894
 //Aaron Lua Siang Kian S10258287K
+//Custom Dyanmic Array to replace vectors
+//No implementation file as we are using templates (allowed for use in project - Not stated under prohibited libaries)
+
+
 #pragma once
 #include <cstddef>
 #include <stdexcept> // For std::out_of_range
