@@ -170,19 +170,6 @@ void loadCast(const string& filename,
     file.close();
 }
 
-// ----------------------------------------------------------------------
-// Display Admin Menu
-// ----------------------------------------------------------------------
-void displayAdminMenu() {
-    cout << "\nAdmin Menu:\n";
-    cout << "1. Add New Actor\n";
-    cout << "2. Add New Movie\n";
-    cout << "3. Add Actor to a movie\n";
-    cout << "4. Update Actor/Movie Details\n";
-    cout << "5. Display All Data (Debugging)\n";
-    cout << "6. Set Actor/Movie Rating\n";
-    cout << "7. Exit\n";
-}
 
 // ----------------------------------------------------------------------
 // Display User Menu
@@ -194,8 +181,7 @@ void displayUserMenu() {
     cout << "3. Display all movies an actor starred in (alphabetical)\n";
     cout << "4. Display all actors in a particular movie (alphabetical)\n";
     cout << "5. Display known actors (≤ 2 hops)\n";
-    cout << "6. Show Top-Rated Actors/Movies\n"; // NEW recommendation feature
-    cout << "7. Exit\n";
+    cout << "6. Exit\n";
 }
 
 // ----------------------------------------------------------------------
@@ -720,14 +706,13 @@ int main() {
     if (role == "admin") {
         // =========== ADMIN MODE ===========
         while (true) {
-            // CHANGE #1: Renamed the Admin menu option 6
             cout << "\nAdmin Menu:\n";
             cout << "1. Add New Actor\n";
             cout << "2. Add New Movie\n";
             cout << "3. Add Actor to a movie\n";
             cout << "4. Update Actor/Movie Details\n";
             cout << "5. Display All Data (Debugging)\n";
-            cout << "6. View Additional Features\n";  // <--- RENAMED
+            cout << "6. View Additional Features\n";
             cout << "7. Exit\n";
 
             cout << "Enter your choice: ";

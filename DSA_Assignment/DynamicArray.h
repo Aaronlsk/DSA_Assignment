@@ -22,10 +22,10 @@ public:
     // 1) Default constructor
     DynamicArray();
 
-    // 2) NEW: Copy constructor (deep copy)
+    // 2) Copy constructor (deep copy)
     DynamicArray(const DynamicArray<T>& other);
 
-    // 3) NEW: Copy assignment operator (deep copy)
+    // 3) Copy assignment operator (deep copy)
     DynamicArray<T>& operator=(const DynamicArray<T>& other);
 
     // 4) Destructor
@@ -55,7 +55,7 @@ DynamicArray<T>::DynamicArray()
     : data(nullptr), capacity(0), size(0) {
 }
 
-// NEW: Copy constructor
+// Copy constructor
 template <typename T>
 DynamicArray<T>::DynamicArray(const DynamicArray<T>& other)
     : data(nullptr), capacity(other.capacity), size(other.size)
@@ -68,7 +68,7 @@ DynamicArray<T>::DynamicArray(const DynamicArray<T>& other)
     }
 }
 
-// NEW: Copy assignment operator
+// Copy assignment operator
 template <typename T>
 DynamicArray<T>& DynamicArray<T>::operator=(const DynamicArray<T>& other) {
     if (this != &other) {
