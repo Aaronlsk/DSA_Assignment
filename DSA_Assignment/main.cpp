@@ -451,6 +451,123 @@ void displayMoviesFromPastThreeYears(MovieBST& movieBST) {
 }
 
 // ----------------------------------------------------------------------
+// Feature G: Display all movies an actor starred in (in alphabetical order)
+// ----------------------------------------------------------------------
+// Helper function
+// A simple insertion sort for DynamicArray<string> 
+void sortTitles(DynamicArray<std::string>& titles) {
+    for (int i = 1; i < titles.getSize(); ++i) {
+        std::string currentTitle = titles[i];
+        int j = i - 1;
+
+        // Move elements that are greater than currentTitle one step right
+        while (j >= 0 && titles[j] > currentTitle) {
+            titles[j + 1] = titles[j];
+            j--;
+        }
+        // Insert currentTitle at the correct spot
+        titles[j + 1] = currentTitle;
+    }
+}
+
+// Feature G: Display all movies an actor starred in (in alphabetical order)
+void displayMoviesByActor(
+    int actorId,
+     HashTable<int, DynamicArray<int>>& actorToMovies,
+    HashTable<int, Movie>& movieTable
+) {
+    // 1) Retrieve the movie ID list for this actor:
+    const DynamicArray<int>* movies = actorToMovies.get(actorId);
+    if (!movies) {
+        std::cout << "Actor ID " << actorId << " not found or has no movies.\n";
+        return;
+    }
+
+    // 2) Gather movie titles into a temporary DynamicArray<string>:
+    DynamicArray<std::string> movieTitles;
+    for (int i = 0; i < movies->getSize(); ++i) {
+        int movieId = (*movies)[i];
+        Movie* moviePtr = movieTable.get(movieId);
+        if (moviePtr) {
+            // If we found the movie in movieTable, add title to our list
+            movieTitles.pushBack(moviePtr->getTitle());
+        }
+    }
+
+    // 3) Sort the collected titles in ascending alphabetical order
+    sortTitles(movieTitles);
+
+    // 4) Print them out
+    if (movieTitles.getSize() == 0) {
+        std::cout << "Actor ID " << actorId << " has no valid movies or does not exist.\n";
+        return;
+    }
+
+    std::cout << "Movies starred by Actor ID " << actorId << ":\n";
+    for (int i = 0; i < movieTitles.getSize(); ++i) {
+        std::cout << " - " << movieTitles[i] << "\n";
+    }
+}
+
+// ----------------------------------------------------------------------
+// Feature H: Display all the actors in a particular movie (in alphabetical order)
+// ----------------------------------------------------------------------
+// A simple insertion sort for a DynamicArray<string>
+void sortNames(DynamicArray<std::string>& names) {
+    for (int i = 1; i < names.getSize(); ++i) {
+        std::string current = names[i];
+        int j = i - 1;
+        // Move elements that are greater than 'current' one step right
+        while (j >= 0 && names[j] > current) {
+            names[j + 1] = names[j];
+            j--;
+        }
+        names[j + 1] = current;
+    }
+}
+
+// Feature H: Display all the actors in a particular movie (in alphabetical order)
+// Displays all actors in a given movie, sorted alphabetically by actor name.
+void displayActorsByMovie(
+    int movieId,
+    HashTable<int, DynamicArray<int>>& movieToActors,
+    HashTable<int, Actor>& actorTable
+) {
+    // 1) Retrieve the list of actor IDs for this movie:
+    const DynamicArray<int>* actorList = movieToActors.get(movieId);
+    if (!actorList) {
+        std::cout << "Movie ID " << movieId << " not found or has no actors.\n";
+        return;
+    }
+
+    // 2) Gather actor names into a temporary DynamicArray<string>:
+    DynamicArray<std::string> actorNames;
+    for (int i = 0; i < actorList->getSize(); ++i) {
+        int actorId = (*actorList)[i];
+        const Actor* actorPtr = actorTable.get(actorId);
+        if (actorPtr) {
+            actorNames.pushBack(actorPtr->getName());
+        }
+    }
+
+    // 3) Sort the collected names in ascending (alphabetical) order:
+    sortNames(actorNames);
+
+    // 4) Print them out
+    if (actorNames.getSize() == 0) {
+        std::cout << "Movie ID " << movieId << " has no valid actors or does not exist.\n";
+        return;
+    }
+
+    std::cout << "Actors in Movie ID " << movieId << ":\n";
+    for (int i = 0; i < actorNames.getSize(); ++i) {
+        std::cout << " - " << actorNames[i] << "\n";
+    }
+}
+
+
+
+// ----------------------------------------------------------------------
 // Main
 // ----------------------------------------------------------------------
 int main() {
@@ -496,6 +613,7 @@ int main() {
             cin >> choice;
 
             if (choice == 1) {
+                cout << "Add new actor \n";
                 int id, birthYear;
                 string name;
                 cout << "\nEnter Actor ID: ";
@@ -511,6 +629,7 @@ int main() {
                 cout << "Actor added successfully!\n";
             }
             else if (choice == 2) {
+                cout << "Add new movie \n";
                 int id, releaseYear;
                 string title;
                 cout << "\nEnter Movie ID: ";
@@ -526,6 +645,7 @@ int main() {
                 cout << "Movie added successfully!\n";
             }
             else if (choice == 3) {
+                cout << "Add actor to movie \n";
                 int actorId, movieId;
                 cout << "\nEnter Actor ID: ";
                 cin >> actorId;
@@ -581,11 +701,32 @@ int main() {
             cin >> choice;
 
             if (choice == 1) {
+                cout << "Display actors in age range \n";
                 displayActorsByAgeRange(actorBST);
             }
             else if (choice == 2) {
+                cout << "Display movies made within past 3 years\n";
                 displayMoviesFromPastThreeYears(movieBST);
             }
+            else if (choice == 3) {
+                cout << "Display movies an Actor starred in\n";
+                int actorId;
+                std::cout << "\nEnter Actor ID: ";
+                std::cin >> actorId;
+
+                // Call our new function
+                displayMoviesByActor(actorId, actorToMovies, movieTable);
+            }
+            else if (choice == 4) {
+                cout << "Display actors in a particular movie\n";
+                int movieId;
+                std::cout << "\nEnter Movie ID: ";
+                std::cin >> movieId;
+
+                // Call our new function
+                displayActorsByMovie(movieId, movieToActors, actorTable);
+            }
+
             else if (choice == 6) {
                 cout << "\nExiting User menu...\n";
                 break;
