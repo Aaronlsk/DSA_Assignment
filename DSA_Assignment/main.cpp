@@ -180,7 +180,7 @@ void displayUserMenu() {
     cout << "2. Display Movies from Past 3 Years\n";
     cout << "3. Display all movies an actor starred in (alphabetical)\n";
     cout << "4. Display all actors in a particular movie (alphabetical)\n";
-    cout << "5. Display known actors (≤ 2 hops)\n";
+    cout << "5. Display a list of all actors that a particular actor knows\n";
     cout << "6. Exit\n";
 }
 
