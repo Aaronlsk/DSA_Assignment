@@ -1,4 +1,4 @@
-// group name: Blue Lock
+﻿// group name: Blue Lock
 // Ng Kai Chong S10259894
 // Aaron Lua Siang Kian S10258287K
 
@@ -190,11 +190,11 @@ void displayAdminMenu() {
 // ----------------------------------------------------------------------
 void displayUserMenu() {
     cout << "\nUser Menu:\n";
-    cout << "1. Display Actors by Age Range\n";
+    cout << "1. Display Actors within an Age Range\n";
     cout << "2. Display Movies from Past 3 Years\n";
-    cout << "3. Display Movies by Actor\n";
-    cout << "4. Display Actors in a Movie\n";
-    cout << "5. Display Known Actors\n";
+    cout << "3. Display all movies an actor starred in\n";
+    cout << "4. Display all the actors in a particular movie\n";
+    cout << "5. Display a list of all actors that a particular actor knows.\n";
     cout << "6. Exit\n";
 }
 
@@ -489,7 +489,6 @@ void displayMoviesByActor(
         int movieId = (*movies)[i];
         Movie* moviePtr = movieTable.get(movieId);
         if (moviePtr) {
-            // If we found the movie in movieTable, add title to our list
             movieTitles.pushBack(moviePtr->getTitle());
         }
     }
@@ -566,6 +565,115 @@ void displayActorsByMovie(
 }
 
 
+// ----------------------------------------------------------------------
+// Feature I: Display a list of all actors that a particular actor knows.
+// ----------------------------------------------------------------------
+// Searching algorithm: depth-first search
+// Recursive DFS helper
+void dfsKnownActors(
+    int currentActorId,
+    int depth,
+    int maxDepth,
+    HashTable<int, DynamicArray<int>>& actorToMovies,
+    HashTable<int, DynamicArray<int>>& movieToActors,
+    DynamicArray<int>& visited,      // to avoid cycles
+    DynamicArray<int>& results       // store known actor IDs
+) {
+    if (depth >= maxDepth) {
+        return;
+    }
+
+    // For each movie that currentActorId is in:
+    DynamicArray<int>* movies = actorToMovies.get(currentActorId);
+    if (!movies) return; // no movies for this actor
+
+    for (int i = 0; i < movies->getSize(); ++i) {
+        int movieId = (*movies)[i];
+
+        // For each actor that shares this movie:
+        DynamicArray<int>* coActors = movieToActors.get(movieId);
+        if (!coActors) continue;
+
+        for (int j = 0; j < coActors->getSize(); ++j) {
+            int coActorId = (*coActors)[j];
+
+            // If not visited, mark visited & add to results
+            bool alreadyVisited = false;
+            for (int k = 0; k < visited.getSize(); k++) {
+                if (visited[k] == coActorId) {
+                    alreadyVisited = true;
+                    break;
+                }
+            }
+            if (!alreadyVisited && coActorId != currentActorId) {
+                visited.pushBack(coActorId);
+                results.pushBack(coActorId);
+
+                // Recurse to get coActors-of-coActors if depth+1 < maxDepth
+                dfsKnownActors(coActorId, depth + 1, maxDepth,
+                    actorToMovies, movieToActors,
+                    visited, results);
+            }
+        }
+    }
+}
+// Main function to get known actors (distance ≤ 2) from a given actor
+void getKnownActorsDFS(
+    int startActorId,
+    HashTable<int, DynamicArray<int>>& actorToMovies,
+    HashTable<int, DynamicArray<int>>& movieToActors,
+    DynamicArray<int>& results
+) {
+    // visited IDs 
+    DynamicArray<int> visited;
+
+    // Mark the starting actor as visited
+    visited.pushBack(startActorId);
+    int maxDepth = 2;
+
+    // Start DFS from startActorId, with depth=0
+    dfsKnownActors(startActorId, 0, maxDepth,
+        actorToMovies, movieToActors,
+        visited, results);
+}
+
+// Feature I: Display a list of all actors that a particular actor knows.
+void displayKnownActors(
+    int startActorId,
+    HashTable<int, DynamicArray<int>>& actorToMovies,
+    HashTable<int, DynamicArray<int>>& movieToActors,
+    HashTable<int, Actor>& actorTable
+) {
+    // 1) Gather all known actor IDs within 2 levels
+    DynamicArray<int> knownIds;
+    getKnownActorsDFS(startActorId, actorToMovies, movieToActors, knownIds);
+
+    // 2) Convert to actor names
+    DynamicArray<std::string> knownNames;
+    for (int i = 0; i < knownIds.getSize(); ++i) {
+        Actor* aPtr = actorTable.get(knownIds[i]);
+        if (aPtr) {
+            knownNames.pushBack(aPtr->getName());
+        }
+    }
+
+    // 3) Sort by name (simple insertion sort)
+    for (int i = 1; i < knownNames.getSize(); ++i) {
+        std::string key = knownNames[i];
+        int j = i - 1;
+        while (j >= 0 && knownNames[j] > key) {
+            knownNames[j + 1] = knownNames[j];
+            j--;
+        }
+        knownNames[j + 1] = key;
+    }
+
+    // 4) Print
+    std::cout << "Actors that " << startActorId << " knows (up to 2 hops):\n";
+    for (int i = 0; i < knownNames.getSize(); ++i) {
+        std::cout << " - " << knownNames[i] << "\n";
+    }
+}
 
 // ----------------------------------------------------------------------
 // Main
@@ -725,6 +833,13 @@ int main() {
 
                 // Call our new function
                 displayActorsByMovie(movieId, movieToActors, actorTable);
+            }
+            else if (choice == 5) {
+                cout << "Display a list of all actors that a particular actor knows.\n";
+                int actorId;
+                std::cout << "Enter Actor ID: ";
+                std::cin >> actorId;
+                displayKnownActors(actorId, actorToMovies, movieToActors, actorTable);
             }
 
             else if (choice == 6) {
