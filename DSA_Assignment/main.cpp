@@ -1,4 +1,5 @@
-﻿// group name: Blue Lock
+﻿
+// group name: Blue Lock
 // Ng Kai Chong S10259894
 // Aaron Lua Siang Kian S10258287K
 
@@ -7,7 +8,6 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
-// #include <regex> // <-- REMOVED, not being used
 #include "Actor.h"
 #include "Movie.h"
 #include "HashTable.h"
@@ -62,7 +62,6 @@ void loadActors(const string& filename, HashTable<int, Actor>& actorTable) {
 
 // ----------------------------------------------------------------------
 // Function to parse a CSV row into a DynamicArray of strings
-// (Already used by loadMoviesToBST, so let's reuse it in loadMovies too.)
 // ----------------------------------------------------------------------
 void parseCSVRow(const string& line, DynamicArray<std::string>& fields) {
     string field;
@@ -73,7 +72,7 @@ void parseCSVRow(const string& line, DynamicArray<std::string>& fields) {
             inQuotes = !inQuotes;  // Toggle inQuotes state
         }
         else if (ch == ',' && !inQuotes) {
-            fields.pushBack(field);  // Add the field to the array
+            fields.pushBack(field);
             field.clear();
         }
         else {
@@ -103,11 +102,9 @@ void loadMovies(const string& filename, HashTable<int, Movie>& movieTable) {
             continue;
         }
 
-        // Use the same CSV parsing function as loadMoviesToBST
         DynamicArray<std::string> fields;
         parseCSVRow(line, fields);
 
-        // We expect at least 4 columns: ID, Title, Description, Year
         if (fields.getSize() < 4) {
             cerr << "Error: Malformed row in movies.csv: " << line << endl;
             continue;
@@ -116,7 +113,7 @@ void loadMovies(const string& filename, HashTable<int, Movie>& movieTable) {
         try {
             int id = stoi(fields[0]);
             string title = fields[1];
-            // fields[2] is the big description we don't store
+            // fields[2] is description, we skip it
             int releaseYear = stoi(fields[3]);
 
             Movie movie(id, title, releaseYear);
@@ -132,7 +129,8 @@ void loadMovies(const string& filename, HashTable<int, Movie>& movieTable) {
 }
 
 // ----------------------------------------------------------------------
-// Supporting Feature for C, G, H (cast.csv presumably has only 2 columns)
+// Load cast.csv (actorId, movieId) into two HashTables:
+// actorToMovies and movieToActors
 // ----------------------------------------------------------------------
 void loadCast(const string& filename,
     HashTable<int, DynamicArray<int>>& actorToMovies,
@@ -182,7 +180,8 @@ void displayAdminMenu() {
     cout << "3. Add Actor to a movie\n";
     cout << "4. Update Actor/Movie Details\n";
     cout << "5. Display All Data (Debugging)\n";
-    cout << "6. Exit\n";
+    cout << "6. Set Actor/Movie Rating\n";
+    cout << "7. Exit\n";
 }
 
 // ----------------------------------------------------------------------
@@ -192,10 +191,11 @@ void displayUserMenu() {
     cout << "\nUser Menu:\n";
     cout << "1. Display Actors within an Age Range\n";
     cout << "2. Display Movies from Past 3 Years\n";
-    cout << "3. Display all movies an actor starred in\n";
-    cout << "4. Display all the actors in a particular movie\n";
-    cout << "5. Display a list of all actors that a particular actor knows.\n";
-    cout << "6. Exit\n";
+    cout << "3. Display all movies an actor starred in (alphabetical)\n";
+    cout << "4. Display all actors in a particular movie (alphabetical)\n";
+    cout << "5. Display known actors (≤ 2 hops)\n";
+    cout << "6. Show Top-Rated Actors/Movies\n"; // NEW recommendation feature
+    cout << "7. Exit\n";
 }
 
 // ----------------------------------------------------------------------
@@ -207,7 +207,9 @@ void displayAllActors(HashTable<int, Actor>& actorTable) {
         const Actor& actor = entry.second;
         cout << "ID: " << actor.getId()
             << ", Name: " << actor.getName()
-            << ", Birth Year: " << actor.getBirthYear() << "\n";
+            << ", Birth Year: " << actor.getBirthYear()
+            << ", Rating: " << actor.getRating()
+            << "\n";
     }
 }
 
@@ -220,7 +222,9 @@ void displayAllMovies(HashTable<int, Movie>& movieTable) {
         const Movie& movie = entry.second;
         cout << "ID: " << movie.getId()
             << ", Title: " << movie.getTitle()
-            << ", Release Year: " << movie.getReleaseYear() << "\n";
+            << ", Release Year: " << movie.getReleaseYear()
+            << ", Rating: " << movie.getRating()
+            << "\n";
     }
 }
 
@@ -232,19 +236,15 @@ void addActorToMovie(int actorId, int movieId,
     HashTable<int, DynamicArray<int>>& movieToActors,
     HashTable<int, Actor>& actorTable,
     HashTable<int, Movie>& movieTable) {
-    // Validate actor existence
     if (actorTable.get(actorId) == nullptr) {
         cout << "Error: Actor ID " << actorId << " does not exist.\n";
         return;
     }
-
-    // Validate movie existence
     if (movieTable.get(movieId) == nullptr) {
         cout << "Error: Movie ID " << movieId << " does not exist.\n";
         return;
     }
 
-    // Update actorToMovies
     DynamicArray<int>& movies = actorToMovies.getOrInsert(actorId, DynamicArray<int>());
     if (!movies.contains(movieId)) {
         movies.pushBack(movieId);
@@ -253,7 +253,6 @@ void addActorToMovie(int actorId, int movieId,
         cout << "Actor ID " << actorId << " is already in Movie ID " << movieId << ".\n";
     }
 
-    // Update movieToActors
     DynamicArray<int>& actors = movieToActors.getOrInsert(movieId, DynamicArray<int>());
     if (!actors.contains(actorId)) {
         actors.pushBack(actorId);
@@ -274,7 +273,7 @@ void updateMovieDetails(HashTable<int, Movie>& movieTable) {
     cin >> movieId;
 
     Movie* movie = movieTable.get(movieId);
-    if (movie == nullptr) {
+    if (!movie) {
         cout << "Error: Movie ID " << movieId << " does not exist.\n";
         return;
     }
@@ -325,7 +324,7 @@ void updateActorDetails(HashTable<int, Actor>& actorTable) {
     cin >> actorId;
 
     Actor* actor = actorTable.get(actorId);
-    if (actor == nullptr) {
+    if (!actor) {
         cout << "Error: Actor ID " << actorId << " does not exist.\n";
         return;
     }
@@ -368,7 +367,7 @@ void updateActorDetails(HashTable<int, Actor>& actorTable) {
 }
 
 // ----------------------------------------------------------------------
-// Feature E: Load actors into a BST
+// Feature E: Load actors into a BST for the "display actors by age range"
 // ----------------------------------------------------------------------
 void loadActorsToBST(const HashTable<int, Actor>& actorTable, BST& bst) {
     for (const auto& entry : actorTable.getAll()) {
@@ -378,9 +377,7 @@ void loadActorsToBST(const HashTable<int, Actor>& actorTable, BST& bst) {
     cout << "Actors loaded into BST successfully.\n";
 }
 
-// ----------------------------------------------------------------------
 // Feature E: Display actors within an age range
-// ----------------------------------------------------------------------
 void displayActorsByAgeRange(BST& bst) {
     int startYear, endYear;
     cout << "Enter the starting birth year: ";
@@ -388,12 +385,11 @@ void displayActorsByAgeRange(BST& bst) {
     cout << "Enter the ending birth year: ";
     cin >> endYear;
 
-    cout << "Actors born between " << startYear << " and " << endYear << ":\n";
     bst.displayRange(startYear, endYear);
 }
 
 // ----------------------------------------------------------------------
-// Feature F: Load movies into BST (already uses parseCSVRow properly)
+// Feature F: Load movies into BST (for "movies from past 3 years")
 // ----------------------------------------------------------------------
 void loadMoviesToBST(const string& filename, MovieBST& movieBST) {
     ifstream file(filename);
@@ -407,14 +403,13 @@ void loadMoviesToBST(const string& filename, MovieBST& movieBST) {
 
     while (getline(file, line)) {
         if (isFirstLine) {
-            isFirstLine = false; // Skip header
+            isFirstLine = false;
             continue;
         }
 
         DynamicArray<std::string> fields;
         parseCSVRow(line, fields);
 
-        // We expect 4 columns: ID, Title, Description, Year
         if (fields.getSize() < 4) {
             cerr << "Error: Malformed row in movies.csv: " << line << endl;
             continue;
@@ -423,7 +418,6 @@ void loadMoviesToBST(const string& filename, MovieBST& movieBST) {
         try {
             int id = stoi(fields[0]);
             string title = fields[1];
-            // fields[2] is description
             int releaseYear = stoi(fields[3]);
 
             Movie movie(id, title, releaseYear);
@@ -438,52 +432,36 @@ void loadMoviesToBST(const string& filename, MovieBST& movieBST) {
     cout << "Movies loaded into BST from " << filename << endl;
 }
 
-// ----------------------------------------------------------------------
-// Feature F: Display movies from the past three years
-// ----------------------------------------------------------------------
 void displayMoviesFromPastThreeYears(MovieBST& movieBST) {
     int currentYear = 2025;
     int startYear = currentYear - 3;
-
-    cout << "Movies released in the past 3 years (from "
-        << startYear << " to " << currentYear << "):\n";
     movieBST.displayInRange(startYear, currentYear);
 }
 
 // ----------------------------------------------------------------------
-// Feature G: Display all movies an actor starred in (in alphabetical order)
+// Feature G: Display all movies an actor starred in (alphabetical)
 // ----------------------------------------------------------------------
-// Helper function
-// A simple insertion sort for DynamicArray<string> 
 void sortTitles(DynamicArray<std::string>& titles) {
     for (int i = 1; i < titles.getSize(); ++i) {
         std::string currentTitle = titles[i];
         int j = i - 1;
-
-        // Move elements that are greater than currentTitle one step right
         while (j >= 0 && titles[j] > currentTitle) {
             titles[j + 1] = titles[j];
             j--;
         }
-        // Insert currentTitle at the correct spot
         titles[j + 1] = currentTitle;
     }
 }
 
-// Feature G: Display all movies an actor starred in (in alphabetical order)
-void displayMoviesByActor(
-    int actorId,
-     HashTable<int, DynamicArray<int>>& actorToMovies,
-    HashTable<int, Movie>& movieTable
-) {
-    // 1) Retrieve the movie ID list for this actor:
+void displayMoviesByActor(int actorId,
+    HashTable<int, DynamicArray<int>>& actorToMovies,
+    HashTable<int, Movie>& movieTable) {
     const DynamicArray<int>* movies = actorToMovies.get(actorId);
     if (!movies) {
-        std::cout << "Actor ID " << actorId << " not found or has no movies.\n";
+        cout << "Actor ID " << actorId << " not found or has no movies.\n";
         return;
     }
 
-    // 2) Gather movie titles into a temporary DynamicArray<string>:
     DynamicArray<std::string> movieTitles;
     for (int i = 0; i < movies->getSize(); ++i) {
         int movieId = (*movies)[i];
@@ -493,30 +471,26 @@ void displayMoviesByActor(
         }
     }
 
-    // 3) Sort the collected titles in ascending alphabetical order
     sortTitles(movieTitles);
 
-    // 4) Print them out
     if (movieTitles.getSize() == 0) {
-        std::cout << "Actor ID " << actorId << " has no valid movies or does not exist.\n";
+        cout << "Actor ID " << actorId << " has no valid movies.\n";
         return;
     }
 
-    std::cout << "Movies starred by Actor ID " << actorId << ":\n";
+    cout << "Movies starred by Actor ID " << actorId << ":\n";
     for (int i = 0; i < movieTitles.getSize(); ++i) {
-        std::cout << " - " << movieTitles[i] << "\n";
+        cout << " - " << movieTitles[i] << "\n";
     }
 }
 
 // ----------------------------------------------------------------------
-// Feature H: Display all the actors in a particular movie (in alphabetical order)
+// Feature H: Display all the actors in a particular movie (alphabetical)
 // ----------------------------------------------------------------------
-// A simple insertion sort for a DynamicArray<string>
 void sortNames(DynamicArray<std::string>& names) {
     for (int i = 1; i < names.getSize(); ++i) {
         std::string current = names[i];
         int j = i - 1;
-        // Move elements that are greater than 'current' one step right
         while (j >= 0 && names[j] > current) {
             names[j + 1] = names[j];
             j--;
@@ -525,21 +499,15 @@ void sortNames(DynamicArray<std::string>& names) {
     }
 }
 
-// Feature H: Display all the actors in a particular movie (in alphabetical order)
-// Displays all actors in a given movie, sorted alphabetically by actor name.
-void displayActorsByMovie(
-    int movieId,
+void displayActorsByMovie(int movieId,
     HashTable<int, DynamicArray<int>>& movieToActors,
-    HashTable<int, Actor>& actorTable
-) {
-    // 1) Retrieve the list of actor IDs for this movie:
+    HashTable<int, Actor>& actorTable) {
     const DynamicArray<int>* actorList = movieToActors.get(movieId);
     if (!actorList) {
-        std::cout << "Movie ID " << movieId << " not found or has no actors.\n";
+        cout << "Movie ID " << movieId << " not found or has no actors.\n";
         return;
     }
 
-    // 2) Gather actor names into a temporary DynamicArray<string>:
     DynamicArray<std::string> actorNames;
     for (int i = 0; i < actorList->getSize(); ++i) {
         int actorId = (*actorList)[i];
@@ -549,57 +517,47 @@ void displayActorsByMovie(
         }
     }
 
-    // 3) Sort the collected names in ascending (alphabetical) order:
     sortNames(actorNames);
 
-    // 4) Print them out
     if (actorNames.getSize() == 0) {
-        std::cout << "Movie ID " << movieId << " has no valid actors or does not exist.\n";
+        cout << "Movie ID " << movieId << " has no valid actors.\n";
         return;
     }
 
-    std::cout << "Actors in Movie ID " << movieId << ":\n";
+    cout << "Actors in Movie ID " << movieId << ":\n";
     for (int i = 0; i < actorNames.getSize(); ++i) {
-        std::cout << " - " << actorNames[i] << "\n";
+        cout << " - " << actorNames[i] << "\n";
     }
 }
 
-
 // ----------------------------------------------------------------------
-// Feature I: Display a list of all actors that a particular actor knows.
+// Feature I: Display a list of all actors that a particular actor knows
 // ----------------------------------------------------------------------
-// Searching algorithm: depth-first search
-// Recursive DFS helper
+// DFS with depth limited to 2
 void dfsKnownActors(
     int currentActorId,
     int depth,
     int maxDepth,
     HashTable<int, DynamicArray<int>>& actorToMovies,
     HashTable<int, DynamicArray<int>>& movieToActors,
-    DynamicArray<int>& visited,      // to avoid cycles
-    DynamicArray<int>& results       // store known actor IDs
+    DynamicArray<int>& visited,
+    DynamicArray<int>& results
 ) {
     if (depth >= maxDepth) {
         return;
     }
-
-    // For each movie that currentActorId is in:
     DynamicArray<int>* movies = actorToMovies.get(currentActorId);
-    if (!movies) return; // no movies for this actor
+    if (!movies) return;
 
     for (int i = 0; i < movies->getSize(); ++i) {
         int movieId = (*movies)[i];
-
-        // For each actor that shares this movie:
         DynamicArray<int>* coActors = movieToActors.get(movieId);
         if (!coActors) continue;
 
         for (int j = 0; j < coActors->getSize(); ++j) {
             int coActorId = (*coActors)[j];
-
-            // If not visited, mark visited & add to results
             bool alreadyVisited = false;
-            for (int k = 0; k < visited.getSize(); k++) {
+            for (int k = 0; k < visited.getSize(); ++k) {
                 if (visited[k] == coActorId) {
                     alreadyVisited = true;
                     break;
@@ -608,8 +566,6 @@ void dfsKnownActors(
             if (!alreadyVisited && coActorId != currentActorId) {
                 visited.pushBack(coActorId);
                 results.pushBack(coActorId);
-
-                // Recurse to get coActors-of-coActors if depth+1 < maxDepth
                 dfsKnownActors(coActorId, depth + 1, maxDepth,
                     actorToMovies, movieToActors,
                     visited, results);
@@ -617,38 +573,26 @@ void dfsKnownActors(
         }
     }
 }
-// Main function to get known actors (distance ≤ 2) from a given actor
-void getKnownActorsDFS(
-    int startActorId,
+
+void getKnownActorsDFS(int startActorId,
     HashTable<int, DynamicArray<int>>& actorToMovies,
     HashTable<int, DynamicArray<int>>& movieToActors,
-    DynamicArray<int>& results
-) {
-    // visited IDs 
+    DynamicArray<int>& results) {
     DynamicArray<int> visited;
-
-    // Mark the starting actor as visited
     visited.pushBack(startActorId);
     int maxDepth = 2;
-
-    // Start DFS from startActorId, with depth=0
     dfsKnownActors(startActorId, 0, maxDepth,
         actorToMovies, movieToActors,
         visited, results);
 }
 
-// Feature I: Display a list of all actors that a particular actor knows.
-void displayKnownActors(
-    int startActorId,
+void displayKnownActors(int startActorId,
     HashTable<int, DynamicArray<int>>& actorToMovies,
     HashTable<int, DynamicArray<int>>& movieToActors,
-    HashTable<int, Actor>& actorTable
-) {
-    // 1) Gather all known actor IDs within 2 levels
+    HashTable<int, Actor>& actorTable) {
     DynamicArray<int> knownIds;
     getKnownActorsDFS(startActorId, actorToMovies, movieToActors, knownIds);
 
-    // 2) Convert to actor names
     DynamicArray<std::string> knownNames;
     for (int i = 0; i < knownIds.getSize(); ++i) {
         Actor* aPtr = actorTable.get(knownIds[i]);
@@ -657,7 +601,7 @@ void displayKnownActors(
         }
     }
 
-    // 3) Sort by name (simple insertion sort)
+    // insertion sort by name
     for (int i = 1; i < knownNames.getSize(); ++i) {
         std::string key = knownNames[i];
         int j = i - 1;
@@ -668,10 +612,73 @@ void displayKnownActors(
         knownNames[j + 1] = key;
     }
 
-    // 4) Print
-    std::cout << "Actors that " << startActorId << " knows (up to 2 hops):\n";
+    cout << "Actors that " << startActorId << " knows (up to 2 hops):\n";
     for (int i = 0; i < knownNames.getSize(); ++i) {
-        std::cout << " - " << knownNames[i] << "\n";
+        cout << " - " << knownNames[i] << "\n";
+    }
+}
+
+// ----------------------------------------------------------------------
+// Additional Feature 1: Capture Actor/Movie Rating (Already Implemented in Admin Menu -> Option 6)
+// ----------------------------------------------------------------------
+
+// ----------------------------------------------------------------------
+// Additional Feature 2: Recommendations Based on Rating
+//     (Show top-rated Actors, top-rated Movies)
+// ----------------------------------------------------------------------
+void sortActorsByRatingDesc(DynamicArray<Actor>& arr) {
+    for (int i = 1; i < arr.getSize(); ++i) {
+        Actor temp = arr[i];
+        int j = i - 1;
+        while (j >= 0 && arr[j].getRating() < temp.getRating()) {
+            arr[j + 1] = arr[j];
+            j--;
+        }
+        arr[j + 1] = temp;
+    }
+}
+
+void showTopRatedActors(HashTable<int, Actor>& actorTable, int topN) {
+    DynamicArray<std::pair<int, Actor>> allEntries = actorTable.getAll();
+    DynamicArray<Actor> actors;
+
+    for (int i = 0; i < allEntries.getSize(); ++i) {
+        actors.pushBack(allEntries[i].second);
+    }
+    sortActorsByRatingDesc(actors);
+
+    cout << "\nTop " << topN << " Actors by Rating:\n";
+    for (int i = 0; i < topN && i < actors.getSize(); ++i) {
+        cout << (i + 1) << ") " << actors[i].getName()
+            << " (Rating: " << actors[i].getRating() << ")\n";
+    }
+}
+
+void sortMoviesByRatingDesc(DynamicArray<Movie>& arr) {
+    for (int i = 1; i < arr.getSize(); ++i) {
+        Movie temp = arr[i];
+        int j = i - 1;
+        while (j >= 0 && arr[j].getRating() < temp.getRating()) {
+            arr[j + 1] = arr[j];
+            j--;
+        }
+        arr[j + 1] = temp;
+    }
+}
+
+void showTopRatedMovies(HashTable<int, Movie>& movieTable, int topN) {
+    auto allEntries = movieTable.getAll();
+    DynamicArray<Movie> movies;
+
+    for (int i = 0; i < allEntries.getSize(); i++) {
+        movies.pushBack(allEntries[i].second);
+    }
+    sortMoviesByRatingDesc(movies);
+
+    cout << "\nTop " << topN << " Movies by Rating:\n";
+    for (int i = 0; i < topN && i < movies.getSize(); ++i) {
+        cout << (i + 1) << ") " << movies[i].getTitle()
+            << " (Rating: " << movies[i].getRating() << ")\n";
     }
 }
 
@@ -694,7 +701,7 @@ int main() {
     loadMoviesToBST("C:/Users/Admin/source/repos/Aaronlsk/DSA_Assignment/DSA_Assignment/movies.csv",
         movieBST);
 
-    // Debugging: Display loaded data
+    // Debug: Display actor->movie relationships
     cout << "\nActor-to-Movie Relationships:\n";
     for (const auto& entry : actorToMovies.getAll()) {
         cout << "Actor ID " << entry.first << " -> Movies: ";
@@ -708,20 +715,27 @@ int main() {
     cout << "\nAre you an Admin or User? (Enter Admin/User): ";
     string role;
     cin >> role;
-
-    // Convert input to lowercase for case-insensitivity
     std::transform(role.begin(), role.end(), role.begin(), ::tolower);
 
-    // Admin workflow
     if (role == "admin") {
+        // =========== ADMIN MODE ===========
         while (true) {
-            displayAdminMenu();
+            // CHANGE #1: Renamed the Admin menu option 6
+            cout << "\nAdmin Menu:\n";
+            cout << "1. Add New Actor\n";
+            cout << "2. Add New Movie\n";
+            cout << "3. Add Actor to a movie\n";
+            cout << "4. Update Actor/Movie Details\n";
+            cout << "5. Display All Data (Debugging)\n";
+            cout << "6. View Additional Features\n";  // <--- RENAMED
+            cout << "7. Exit\n";
+
             cout << "Enter your choice: ";
             int choice;
             cin >> choice;
 
             if (choice == 1) {
-                cout << "Add new actor \n";
+                // Add new actor
                 int id, birthYear;
                 string name;
                 cout << "\nEnter Actor ID: ";
@@ -737,7 +751,7 @@ int main() {
                 cout << "Actor added successfully!\n";
             }
             else if (choice == 2) {
-                cout << "Add new movie \n";
+                // Add new movie
                 int id, releaseYear;
                 string title;
                 cout << "\nEnter Movie ID: ";
@@ -753,7 +767,7 @@ int main() {
                 cout << "Movie added successfully!\n";
             }
             else if (choice == 3) {
-                cout << "Add actor to movie \n";
+                // Add actor to movie
                 int actorId, movieId;
                 cout << "\nEnter Actor ID: ";
                 cin >> actorId;
@@ -765,6 +779,7 @@ int main() {
                     actorTable, movieTable);
             }
             else if (choice == 4) {
+                // Update actor or movie
                 int updateChoice;
                 cout << "\nWhat would you like to update?\n";
                 cout << "1. Actor Details\n";
@@ -783,12 +798,84 @@ int main() {
                 }
             }
             else if (choice == 5) {
-                cout << "\nActors:\n";
+                // Debug: display all
                 displayAllActors(actorTable);
-                cout << "\nMovies:\n";
                 displayAllMovies(movieTable);
             }
             else if (choice == 6) {
+                // CHANGE #2: "View Additional Features" Submenu
+                cout << "\nAdditional Features:\n";
+                cout << "1. Set Actor/Movie Rating\n";
+                cout << "2. Show Top-Rated Actors/Movies\n";
+                cout << "Enter choice: ";
+                int subChoice;
+                cin >> subChoice;
+
+                if (subChoice == 1) {
+                    // Set rating
+                    cout << "\n1. Actor\n2. Movie\nEnter choice: ";
+                    int ratingChoice;
+                    cin >> ratingChoice;
+
+                    if (ratingChoice == 1) {
+                        int actorId;
+                        cout << "Enter Actor ID: ";
+                        cin >> actorId;
+                        Actor* actorPtr = actorTable.get(actorId);
+                        if (!actorPtr) {
+                            cout << "Actor with ID " << actorId << " not found.\n";
+                        }
+                        else {
+                            double newRating;
+                            cout << "Enter new rating (0.0 - 5.0): ";
+                            cin >> newRating;
+                            actorPtr->setRating(newRating);
+                            cout << "Actor ID " << actorId << " rating updated to " << newRating << endl;
+                        }
+                    }
+                    else if (ratingChoice == 2) {
+                        int movieId;
+                        cout << "Enter Movie ID: ";
+                        cin >> movieId;
+                        Movie* moviePtr = movieTable.get(movieId);
+                        if (!moviePtr) {
+                            cout << "Movie with ID " << movieId << " not found.\n";
+                        }
+                        else {
+                            double newRating;
+                            cout << "Enter new rating (0.0 - 5.0): ";
+                            cin >> newRating;
+                            moviePtr->setRating(newRating);
+                            cout << "Movie ID " << movieId << " rating updated to " << newRating << endl;
+                        }
+                    }
+                    else {
+                        cout << "Invalid choice.\n";
+                    }
+                }
+                else if (subChoice == 2) {
+                    // Show top-rated actors or movies
+                    cout << "\n1. Show Top 5 Actors\n2. Show Top 5 Movies\nEnter choice: ";
+                    int recChoice;
+                    cin >> recChoice;
+
+                    if (recChoice == 1) {
+                        // Force any rating < 0 to 0.0 for display
+                        showTopRatedActors(actorTable, 5);
+                    }
+                    else if (recChoice == 2) {
+                        // Force any rating < 0 to 0.0 for display
+                        showTopRatedMovies(movieTable, 5);
+                    }
+                    else {
+                        cout << "Invalid choice.\n";
+                    }
+                }
+                else {
+                    cout << "Invalid choice.\n";
+                }
+            }
+            else if (choice == 7) {
                 cout << "\nExiting Admin menu...\n";
                 break;
             }
@@ -797,9 +884,8 @@ int main() {
             }
         }
     }
-    // User workflow
     else if (role == "user") {
-        // Load actors into BST for user features
+        // =========== USER MODE ===========
         loadActorsToBST(actorTable, actorBST);
 
         while (true) {
@@ -809,39 +895,34 @@ int main() {
             cin >> choice;
 
             if (choice == 1) {
-                cout << "Display actors in age range \n";
+                // Display actors in age range
                 displayActorsByAgeRange(actorBST);
             }
             else if (choice == 2) {
-                cout << "Display movies made within past 3 years\n";
+                // Display movies from past 3 years
                 displayMoviesFromPastThreeYears(movieBST);
             }
             else if (choice == 3) {
-                cout << "Display movies an Actor starred in\n";
+                // Display movies for a given actor
                 int actorId;
-                std::cout << "\nEnter Actor ID: ";
-                std::cin >> actorId;
-
-                // Call our new function
+                cout << "\nEnter Actor ID: ";
+                cin >> actorId;
                 displayMoviesByActor(actorId, actorToMovies, movieTable);
             }
             else if (choice == 4) {
-                cout << "Display actors in a particular movie\n";
+                // Display actors for a given movie
                 int movieId;
-                std::cout << "\nEnter Movie ID: ";
-                std::cin >> movieId;
-
-                // Call our new function
+                cout << "\nEnter Movie ID: ";
+                cin >> movieId;
                 displayActorsByMovie(movieId, movieToActors, actorTable);
             }
             else if (choice == 5) {
-                cout << "Display a list of all actors that a particular actor knows.\n";
+                // Display known actors within 2 hops
                 int actorId;
-                std::cout << "Enter Actor ID: ";
-                std::cin >> actorId;
+                cout << "Enter Actor ID: ";
+                cin >> actorId;
                 displayKnownActors(actorId, actorToMovies, movieToActors, actorTable);
             }
-
             else if (choice == 6) {
                 cout << "\nExiting User menu...\n";
                 break;
@@ -851,7 +932,6 @@ int main() {
             }
         }
     }
-    // Invalid role
     else {
         cout << "\nInvalid role entered. Exiting program...\n";
     }

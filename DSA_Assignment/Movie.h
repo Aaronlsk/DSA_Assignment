@@ -9,6 +9,7 @@ private:
     int id;
     string title;
     int releaseYear;
+    double rating;
 
 public:
     Movie() : id(-1), title(""), releaseYear(0) {}
@@ -20,6 +21,9 @@ public:
 
     void setTitle(const string& title);
     void setReleaseYear(int releaseYear);
+
+    double getRating() const { return rating; }
+    void setRating(double r) { rating = r; }
 };
 
 #endif // MOVIE_H

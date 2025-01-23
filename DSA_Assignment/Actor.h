@@ -9,7 +9,7 @@ private:
     int id;
     string name;
     int birthYear;
-
+    double rating; 
 public:
     Actor() : id(-1), name(""), birthYear(0) {}
     Actor(int id, const string& name, int birthYear);
@@ -20,6 +20,9 @@ public:
 
     void setName(const string& name);
     void setBirthYear(int birthYear);
+
+    double getRating() const { return rating; }
+    void setRating(double r) { rating = r; }
 };
 
 #endif // ACTOR_H
